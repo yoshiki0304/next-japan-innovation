@@ -1419,3 +1419,52 @@ body.is-leaving .page-transition::after { animation: transitionSheen .62s .08s v
 body.modal-open { overflow:hidden; }
 @media (max-width:980px){ .column-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
 @media (max-width:640px){ .column-grid{grid-template-columns:1fr;gap:20px;margin-top:32px;} .column-card__body{padding:22px 20px 24px;} .column-modal__panel{width:100vw;} }
+
+/* ===== NEWS page refinement (v11) ===== */
+.column-news-title {
+  margin-bottom: 20px;
+  font-family: var(--font-en);
+  font-size: clamp(3.4rem, 7vw, 7.4rem) !important;
+  line-height: .92 !important;
+  letter-spacing: -.055em !important;
+}
+.column-news-lead {
+  max-width: 720px;
+  margin: 0;
+  color: var(--muted);
+  font-size: clamp(.92rem, 1.2vw, 1.08rem);
+  line-height: 2;
+}
+
+/* Reset the legacy horizontal article-card grid so every Blogger card uses
+   the full available width and keeps equal left/right spacing. */
+.column-grid .column-card {
+  display: block;
+  grid-template-columns: none;
+  min-height: 0;
+  width: 100%;
+}
+.column-card__button {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.column-card__image,
+.column-card__body {
+  width: 100%;
+  box-sizing: border-box;
+}
+.column-card__body {
+  padding-inline: 28px;
+}
+.column-card__meta {
+  justify-content: flex-start;
+}
+
+@media (max-width: 640px) {
+  .column-section .container { width: calc(100vw - 32px); }
+  .column-grid { width: 100%; }
+  .column-card__body { padding: 24px 22px 28px; }
+  .column-news-title { font-size: clamp(3.2rem, 18vw, 5rem) !important; }
+}
