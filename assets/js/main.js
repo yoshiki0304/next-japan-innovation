@@ -709,9 +709,9 @@
         { x: 0, opacity: 1, filter: 'blur(0px)', scale: 1, ease: 'none',
           scrollTrigger: {
             trigger: heading,
-            start: 'top 96%',
-            end: 'top 42%',
-            scrub: 2.15,
+            start: 'top 94%',
+            end: 'top 64%',
+            scrub: 1.1,
             invalidateOnRefresh: true
           }
         }
