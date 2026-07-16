@@ -709,9 +709,9 @@
         { x: 0, opacity: 1, filter: 'blur(0px)', scale: 1, ease: 'none',
           scrollTrigger: {
             trigger: heading,
-            start: 'top 98%',
-            end: 'top 50%',
-            scrub: 1.65,
+            start: 'top 96%',
+            end: 'top 42%',
+            scrub: 2.15,
             invalidateOnRefresh: true
           }
         }
@@ -719,7 +719,7 @@
     });
 
     document.querySelectorAll('[data-image-reveal], .entry-option, .service-card, .column-card').forEach((el, i) => {
-      gsap.fromTo(el, { y: 34, opacity: 0 }, { y: 0, opacity: 1, duration: .8, ease: 'power3.out', delay: (i % 3) * .04,
+      gsap.fromTo(el, { y: 34, opacity: 0 }, { y: 0, opacity: 1, duration: 1.0, ease: 'power4.out', delay: (i % 3) * .04,
         scrollTrigger: { trigger: el, start: 'top 91%', once: true } });
     });
 

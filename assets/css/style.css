@@ -1865,3 +1865,209 @@ img, svg, video, canvas { max-width: 100%; }
 @media (prefers-reduced-motion: reduce) {
   .boundary-runner span { animation: none; opacity: .35; transform: none; left: 36%; }
 }
+
+/* =========================================================
+   v19 — spacing system, readable hierarchy, responsive polish
+   ========================================================= */
+:root {
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 40px;
+  --space-6: 48px;
+  --space-7: 64px;
+  --space-8: 80px;
+  --space-9: 96px;
+  --motion-ease: cubic-bezier(.22, 1, .36, 1);
+}
+
+/* Consistent section rhythm based on an 8px grid. */
+.section { padding-block: clamp(88px, 9vw, 144px); }
+.section-heading { position: relative; min-width: 0; }
+.section-heading .eyebrow { margin-bottom: clamp(24px, 2.4vw, 32px); }
+.section-heading h2,
+.entry-cta h2,
+.news-heading h2 {
+  margin-top: 0;
+  text-wrap: balance;
+}
+
+/* Give large headings a deliberate reading pause before supporting copy. */
+.section-heading + :is(.intro__copy,.business-overview__copy,.culture-top__copy,.jobs-intro__copy,.partner-intro__copy,.contact-intro__copy),
+.entry-cta h2 + p,
+.news-heading h2 + p {
+  position: relative;
+}
+
+.intro__grid,
+.business-overview__grid,
+.culture-top,
+.jobs-intro,
+.partner-intro,
+.contact-intro {
+  column-gap: clamp(56px, 8vw, 120px);
+  row-gap: var(--space-7);
+}
+
+.intro__copy,
+.business-overview__copy,
+.culture-top__copy,
+.jobs-intro__copy,
+.partner-intro__copy,
+.contact-intro__copy {
+  padding-top: clamp(40px, 5vw, 72px);
+}
+
+:is(.intro__copy,.business-overview__copy,.culture-top__copy,.jobs-intro__copy,.partner-intro__copy,.contact-intro__copy) .lead {
+  margin-bottom: var(--space-4);
+}
+
+:is(.intro__copy,.business-overview__copy,.culture-top__copy,.jobs-intro__copy,.partner-intro__copy,.contact-intro__copy) p + p {
+  margin-top: var(--space-3);
+}
+
+/* Home contact CTA: prevent the lead from visually touching the display heading. */
+.entry-cta__inner { padding-block: clamp(104px, 10vw, 152px); }
+.entry-cta h2 {
+  margin-bottom: clamp(48px, 5vw, 72px);
+  max-width: 12ch;
+}
+.entry-cta__inner > p:not(.eyebrow) {
+  max-width: 760px;
+  margin: 0;
+  font-size: clamp(.98rem, 1.3vw, 1.12rem);
+  line-height: 2;
+}
+.entry-cta__actions { margin-top: clamp(40px, 4.5vw, 64px); }
+
+/* NEWS: keep title and description in normal document flow with ample separation. */
+.news-section { padding-block: clamp(96px, 10vw, 160px); }
+.news-heading {
+  max-width: 880px;
+  margin: 0 auto clamp(72px, 8vw, 112px);
+  text-align: center;
+  position: relative;
+}
+.news-heading .eyebrow { justify-content: center; margin-bottom: clamp(28px, 3vw, 40px); }
+.news-heading h2 {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  font-size: clamp(4.6rem, 10vw, 8.5rem);
+  line-height: .88;
+  margin: 0;
+  color: var(--navy);
+  opacity: 1;
+}
+.news-heading > p:last-child {
+  position: relative;
+  z-index: 2;
+  max-width: 660px;
+  margin: clamp(56px, 6vw, 80px) auto 0;
+  line-height: 2;
+  color: var(--muted);
+}
+
+/* Decorative giant labels should remain atmospheric, not compete with copy. */
+.section-index {
+  opacity: .55;
+  color: rgba(0, 26, 61, .055);
+  transform: translateY(-3%);
+  font-size: clamp(6.5rem, 15vw, 15rem);
+}
+
+/* Maintain consistent image treatment and alignment. */
+.business-visual,
+.message-preview__media,
+.message__media,
+.photo,
+.portal-card__image,
+.news-row__media {
+  background: #dfe5eb;
+}
+.business-visual img,
+.message-preview__media img,
+.message__media img,
+.photo img,
+.portal-card__image img,
+.news-row__media img {
+  object-position: center center;
+}
+.business-visual { margin-top: clamp(64px, 7vw, 104px); }
+.photo-collage { margin-top: clamp(64px, 7vw, 96px); }
+
+/* Unified interactive rhythm. */
+.entry-button,
+.header-entry,
+.text-link,
+.circle-link,
+.portal-card,
+.news-row,
+.home-job-link {
+  transition-timing-function: var(--motion-ease) !important;
+}
+
+@media (max-width: 900px) {
+  .intro__grid,
+  .business-overview__grid,
+  .culture-top,
+  .jobs-intro,
+  .partner-intro,
+  .contact-intro {
+    grid-template-columns: 1fr;
+    row-gap: var(--space-5);
+  }
+  .intro__copy,
+  .business-overview__copy,
+  .culture-top__copy,
+  .jobs-intro__copy,
+  .partner-intro__copy,
+  .contact-intro__copy {
+    padding-top: 0;
+    max-width: 720px;
+  }
+  .news-heading { text-align: left; }
+  .news-heading .eyebrow { justify-content: flex-start; }
+  .news-heading > p:last-child { margin-left: 0; margin-right: 0; }
+}
+
+@media (max-width: 760px) {
+  .section { padding-block: 80px; }
+  .section-heading .eyebrow { margin-bottom: 24px; }
+  .section-heading h2 { line-height: 1.18; }
+  .entry-cta__inner { padding-block: 88px; }
+  .entry-cta h2 {
+    max-width: 100%;
+    margin-bottom: 40px;
+    font-size: clamp(2.5rem, 11vw, 3.55rem);
+    line-height: 1.16;
+  }
+  .entry-cta__inner > p:not(.eyebrow) {
+    font-size: .94rem;
+    line-height: 1.9;
+  }
+  .entry-cta__actions { margin-top: 40px; }
+  .news-section { padding-block: 80px 96px; }
+  .news-heading { margin-bottom: 64px; }
+  .news-heading h2 { font-size: clamp(4rem, 21vw, 6rem); }
+  .news-heading > p:last-child {
+    margin-top: 40px;
+    font-size: .94rem;
+    line-height: 1.9;
+  }
+  .section-index {
+    font-size: clamp(5.5rem, 25vw, 8rem);
+    opacity: .42;
+    top: 22px;
+  }
+  .business-visual,
+  .photo-collage { margin-top: 56px; }
+}
+
+@media (max-width: 390px) {
+  .section { padding-block: 72px; }
+  .entry-cta h2 { font-size: clamp(2.25rem, 10.8vw, 3rem); }
+  .news-heading h2 { font-size: clamp(3.8rem, 20vw, 5.2rem); }
+}
