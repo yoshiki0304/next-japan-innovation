@@ -534,4 +534,45 @@
       window.setTimeout(() => { window.location.href = url.href; }, reducedMotion ? 0 : 430);
     });
   });
+
+
+  // Static contact form: validates fields and opens the visitor's mail application.
+  const contactForm = qs('[data-contact-form]');
+  if (contactForm) {
+    const status = qs('[data-form-status]', contactForm);
+    const params = new URLSearchParams(window.location.search);
+    const preset = params.get('category');
+    const categorySelect = qs('select[name="category"]', contactForm);
+    if (preset === 'agency' && categorySelect) categorySelect.value = '代理店募集について';
+    if (preset === 'recruit' && categorySelect) categorySelect.value = '採用について';
+
+    contactForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      if (!contactForm.reportValidity()) {
+        if (status) status.textContent = '未入力の必須項目をご確認ください。';
+        return;
+      }
+      const data = new FormData(contactForm);
+      const category = String(data.get('category') || 'お問い合わせ');
+      const name = String(data.get('name') || '');
+      const company = String(data.get('company') || '');
+      const email = String(data.get('email') || '');
+      const tel = String(data.get('tel') || '');
+      const message = String(data.get('message') || '');
+      const subject = `【Webサイト】${category}`;
+      const body = [
+        `お問い合わせ種別：${category}`,
+        `会社名：${company}`,
+        `お名前：${name}`,
+        `メールアドレス：${email}`,
+        `電話番号：${tel}`,
+        '',
+        'お問い合わせ内容：',
+        message,
+      ].join('\n');
+      if (status) status.textContent = 'メールソフトを起動します。内容をご確認のうえ送信してください。';
+      window.location.href = `mailto:info@next-ji.jp?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    });
+  }
+
 })();

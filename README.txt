@@ -1,38 +1,19 @@
-株式会社Next Japan Innovation 採用ホームページ（背景モーション・余白調整版）
+株式会社Next Japan Innovation コーポレートサイト
 
-【ページ構成】
-・index.html：TOP
-・business.html：Business
-・company.html：About us
-・jobs.html：Job
-・column.html：コラム
-・entry.html：Entry
-・culture.html：旧URLからAbout usへの転送用
+■ ページ構成
+index.html      TOP
+company.html    企業情報
+business.html   事業紹介
+contact.html    お問合せ
+jobs.html       採用情報
+partner.html    代理店募集
 
-【今回の修正】
-・参考サイトの技術的な表現を踏まえ、円、接続線、光点、走査線がゆっくり動くCanvas背景をJavaScriptで追加
-・背景はスクロール位置とマウス位置に連動
-・TOP、各ページのファーストビュー、濃紺セクション、Business冒頭に背景モーションを適用
-・Businessページの不要な縦余白を削減
-・Business冒頭の画像が空白になる可能性があった表示処理を修正
-・提供サービス内の「CORPORATE SERVICE」リンクボタンを削除
-・PC／スマートフォンでセクション間隔を再調整
-・CSS／JavaScriptのキャッシュ更新用バージョン番号を追加
+■ GitHub Pagesへの反映
+このフォルダ内のファイルとassetsフォルダを、公開先リポジトリのルートへアップロードしてください。
+既存ファイルは同名のものを上書きします。
 
-【既存のJavaScript演出】
-・スクロール進行状況を示す上部プログレスバー
-・スクロール方向に応じたヘッダーの表示／非表示
-・各セクション、見出し、画像のスクロール表示演出
-・ファーストビュー画像の自動切り替えと手動切り替えボタン
-・スマートフォンメニューの段階的な表示アニメーション
-・募集職種のアコーディオン開閉と表示位置の自動調整
-・カードにマウスを合わせた際の立体的な動き
-・ヒーローエリアのマウス連動表現
-・ページ遷移時のトランジション
-・ページ上部へ戻るボタン
-・動きを減らす端末設定への対応
+■ お問合せフォーム
+GitHub Pagesはサーバー処理ができないため、フォーム送信時に利用者のメールソフトを開きます。送信先は info@next-ji.jp です。
 
-【GitHubへの反映方法】
-このフォルダ内のファイルを、現在の採用サイトフォルダへすべて上書きしてください。
-ZIPファイル自体はアップロードせず、解凍後の中身を使用してください。
-GitHubへ反映後、ブラウザを再読み込みしてください。
+■ 旧URL
+entry.html、column.html、culture.htmlは、新しい該当ページへ自動転送します。
