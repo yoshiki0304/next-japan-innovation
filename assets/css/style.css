@@ -2535,3 +2535,46 @@ img, svg, video, canvas { max-width: 100%; }
   .thanks-card > p:not(.eyebrow) { margin-top: 30px; font-size: .94rem; line-height: 1.85; }
   .thanks-actions { display: grid; margin-top: 36px; }
 }
+
+
+/* =========================================================
+   v33 — contact form heading/readability spacing fix
+   ========================================================= */
+.contact-form-layout > .section-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+.contact-form-layout > .section-heading h2 {
+  display: block;
+  width: 100%;
+  margin: 0 0 clamp(40px, 4.5vw, 64px) !important;
+  line-height: 1.18;
+  overflow: visible !important;
+}
+.contact-form-layout > .section-heading h2 .phrase {
+  display: block;
+  line-height: inherit;
+  overflow: visible !important;
+}
+.contact-form-layout .form-note {
+  position: relative;
+  z-index: 2;
+  display: block;
+  margin: 0 !important;
+  max-width: 32em;
+  line-height: 2;
+  text-wrap: pretty;
+}
+
+@media (max-width: 760px) {
+  .contact-form-layout > .section-heading h2 {
+    margin-bottom: 32px !important;
+    line-height: 1.2;
+  }
+  .contact-form-layout .form-note {
+    font-size: .92rem;
+    line-height: 1.85;
+  }
+}
