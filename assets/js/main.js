@@ -536,42 +536,42 @@
   });
 
 
-  // Static contact form: validates fields and opens the visitor's mail application.
+  // Hosted form submission for GitHub Pages via FormSubmit.
   const contactForm = qs('[data-contact-form]');
   if (contactForm) {
     const status = qs('[data-form-status]', contactForm);
+    const submitButton = qs('.form-submit', contactForm);
+    const submitLabel = qs('.form-submit span', contactForm);
+    const nextInput = qs('[data-form-next]', contactForm);
+    const categorySelect = qs('[data-category]', contactForm);
     const params = new URLSearchParams(window.location.search);
     const preset = params.get('category');
-    const categorySelect = qs('select[name="category"]', contactForm);
+
     if (preset === 'agency' && categorySelect) categorySelect.value = '代理店募集について';
     if (preset === 'recruit' && categorySelect) categorySelect.value = '採用について';
 
+    if (nextInput) {
+      const basePath = window.location.pathname.replace(/[^/]*$/, '');
+      nextInput.value = `${window.location.origin}${basePath}thanks.html`;
+    }
+
     contactForm.addEventListener('submit', (event) => {
-      event.preventDefault();
       if (!contactForm.reportValidity()) {
-        if (status) status.textContent = '未入力の必須項目をご確認ください。';
+        event.preventDefault();
+        if (status) status.textContent = '未入力の必須項目、または入力形式をご確認ください。';
         return;
       }
-      const data = new FormData(contactForm);
-      const category = String(data.get('category') || 'お問い合わせ');
-      const name = String(data.get('name') || '');
-      const company = String(data.get('company') || '');
-      const email = String(data.get('email') || '');
-      const tel = String(data.get('tel') || '');
-      const message = String(data.get('message') || '');
-      const subject = `【Webサイト】${category}`;
-      const body = [
-        `お問い合わせ種別：${category}`,
-        `会社名：${company}`,
-        `お名前：${name}`,
-        `メールアドレス：${email}`,
-        `電話番号：${tel}`,
-        '',
-        'お問い合わせ内容：',
-        message,
-      ].join('\n');
-      if (status) status.textContent = 'メールソフトを起動します。内容をご確認のうえ送信してください。';
-      window.location.href = `mailto:info@next-ji.jp?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+      if (contactForm.dataset.submitting === '1') {
+        event.preventDefault();
+        return;
+      }
+
+      contactForm.dataset.submitting = '1';
+      contactForm.classList.add('is-submitting');
+      if (submitButton) submitButton.disabled = true;
+      if (submitLabel) submitLabel.textContent = '送信中です…';
+      if (status) status.textContent = '送信しています。画面を閉じずにお待ちください。';
     });
   }
 

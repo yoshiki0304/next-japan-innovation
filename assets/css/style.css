@@ -2465,3 +2465,73 @@ img, svg, video, canvas { max-width: 100%; }
   .product-marquee__track { animation: none; }
   .intro__copy .lead .typewriter-segment { --marker-progress: 100%; }
 }
+
+
+/* =========================================================
+   v30 — requested single-line mobile labels
+   ========================================================= */
+.company-name-row dd,
+.one-line-slogan {
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+}
+
+@media (max-width: 760px) {
+  /* Keep the corporate name on one readable line without squeezing other rows. */
+  .company-table .company-name-row {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  .company-table .company-name-row dd {
+    white-space: nowrap !important;
+    font-size: clamp(.93rem, 4.1vw, 1.08rem) !important;
+    letter-spacing: -.025em;
+  }
+
+  /* This copy is intentionally kept on one line as requested. */
+  .intro__copy .one-line-slogan {
+    white-space: nowrap !important;
+    display: block;
+    width: max-content;
+    max-width: none;
+    font-size: clamp(1rem, 4.35vw, 1.18rem) !important;
+    line-height: 1.35 !important;
+    letter-spacing: -.04em;
+  }
+  .intro__copy .one-line-slogan .phrase {
+    display: inline !important;
+    white-space: nowrap !important;
+  }
+  .intro__copy .one-line-slogan .phrase + .phrase::before {
+    content: "" !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .intro__copy .one-line-slogan {
+    font-size: clamp(.92rem, 4.15vw, 1.02rem) !important;
+  }
+}
+
+
+/* =========================================================
+   v31 — hosted contact form + completion page
+   ========================================================= */
+.contact-form label > span em { color: var(--blue-soft); font-size: .72em; font-style: normal; margin-left: .45em; }
+.form-honey { position: absolute !important; left: -9999px !important; width: 1px !important; height: 1px !important; opacity: 0 !important; pointer-events: none !important; }
+.form-submit:disabled { cursor: wait; opacity: .68; transform: none !important; }
+.contact-form.is-submitting { pointer-events: none; }
+.contact-form.is-submitting input, .contact-form.is-submitting select, .contact-form.is-submitting textarea { opacity: .76; }
+.thanks-main { background: var(--navy-deep); }
+.thanks-section { position: relative; min-height: 100svh; display: grid; align-items: center; overflow: hidden; padding: 150px 0 100px; color: #fff; }
+.thanks-section::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 75% 20%, rgba(7,93,232,.3), transparent 36%), linear-gradient(135deg, #001a3d, #000c1c 70%); }
+.thanks-card { position: relative; z-index: 2; max-width: 920px; }
+.thanks-card h1 { margin: 0; font-size: clamp(3.2rem, 8vw, 7.6rem); line-height: 1.04; letter-spacing: -.055em; font-weight: 600; }
+.thanks-card > p:not(.eyebrow) { max-width: 640px; margin: 42px 0 0; color: #d5deec; font-size: 1.05rem; line-height: 2; }
+.thanks-actions { display: flex; gap: 14px; margin-top: 48px; }
+@media (max-width: 760px) {
+  .thanks-section { min-height: 82svh; padding: 130px 0 72px; }
+  .thanks-card h1 { font-size: clamp(2.7rem, 13vw, 4.4rem); line-height: 1.12; }
+  .thanks-card > p:not(.eyebrow) { margin-top: 30px; font-size: .94rem; line-height: 1.85; }
+  .thanks-actions { display: grid; margin-top: 36px; }
+}
