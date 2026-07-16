@@ -705,13 +705,13 @@
       if (heading.dataset.gsapHeading === '1') return;
       heading.dataset.gsapHeading = '1';
       gsap.fromTo(heading,
-        { x: () => Math.max(-110, -window.innerWidth * .10), opacity: 0, filter: 'blur(4px)' },
-        { x: 0, opacity: 1, filter: 'blur(0px)', ease: 'none',
+        { x: () => Math.max(-220, -window.innerWidth * .18), opacity: 0, filter: 'blur(9px)', scale: .985 },
+        { x: 0, opacity: 1, filter: 'blur(0px)', scale: 1, ease: 'none',
           scrollTrigger: {
             trigger: heading,
-            start: 'top 92%',
-            end: 'top 62%',
-            scrub: 0.65,
+            start: 'top 98%',
+            end: 'top 50%',
+            scrub: 1.65,
             invalidateOnRefresh: true
           }
         }
