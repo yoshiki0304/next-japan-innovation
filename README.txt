@@ -1,18 +1,18 @@
-株式会社Next Japan Innovation 採用サイト（複数ページ版）
+株式会社Next Japan Innovation 採用ホームページ（修正版）
 
-■ ページ構成
-index.html      採用サイトトップ
-business.html   事業紹介
-culture.html    働く環境・価値観
-company.html    代表メッセージ・会社情報
-jobs.html       募集職種・選考フロー
-entry.html      エントリー案内
-assets/         CSS・JavaScript・画像
+【ページ構成】
+・index.html：TOP
+・business.html：Business
+・company.html：About us
+・jobs.html：Job
+・column.html：コラム
+・entry.html：Entry
+・culture.html：旧URLからAbout usへの転送用
 
-■ GitHubへのアップロード
-既存の会社ホームページ内に追加する場合は、この「nextji-recruit-hp」フォルダの名前を「recruit」に変更し、フォルダごとアップロードしてください。
-公開URL例：
-https://yoshiki0304.github.io/nextji-hp/recruit/
+【主な修正】
+・PC／スマートフォン両方で、日本語の助詞や句読点の直前・直後に不自然な改行が入りにくいよう調整
+・見出しの文字サイズとカラム幅を画面幅別に最適化
+・ヘッダーメニューを TOP / Business / About us / Job / コラム / Entry の順に統一
+・Columnページを追加
 
-■ 注意
-index.htmlだけではなく、上記HTMLファイルとassetsフォルダをすべて一緒にアップロードしてください。
+GitHubへアップロードする際は、このフォルダ内のファイルを既存の採用サイトフォルダへ上書きしてください。
