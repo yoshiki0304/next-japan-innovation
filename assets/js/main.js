@@ -771,17 +771,40 @@
     };
 
     lines.forEach((line) => {
-      const text = line.textContent.trim();
+      const phraseTexts = [...line.querySelectorAll(':scope > .phrase')]
+        .map((phrase) => phrase.textContent.trim())
+        .filter(Boolean);
+      const text = phraseTexts.length ? phraseTexts.join('') : line.textContent.trim();
       line.setAttribute('aria-label', text);
       line.classList.add('typewriter-line');
       line.textContent = '';
-      [...text].forEach((character) => {
-        const span = document.createElement('span');
-        span.className = 'typewriter-char';
-        span.setAttribute('aria-hidden', 'true');
-        span.textContent = character;
-        line.appendChild(span);
-      });
+      const content = document.createElement('span');
+      content.className = phraseTexts.length
+        ? 'typewriter-content typewriter-content--segmented'
+        : 'typewriter-content';
+      content.setAttribute('aria-hidden', 'true');
+
+      const appendCharacters = (target, value) => {
+        [...value].forEach((character) => {
+          const span = document.createElement('span');
+          span.className = 'typewriter-char';
+          span.setAttribute('aria-hidden', 'true');
+          span.textContent = character;
+          target.appendChild(span);
+        });
+      };
+
+      if (phraseTexts.length) {
+        phraseTexts.forEach((phraseText) => {
+          const segment = document.createElement('span');
+          segment.className = 'typewriter-segment';
+          appendCharacters(segment, phraseText);
+          content.appendChild(segment);
+        });
+      } else {
+        appendCharacters(content, text);
+      }
+      line.appendChild(content);
     });
 
     if (reduce) {

@@ -2284,3 +2284,184 @@ img, svg, video, canvas { max-width: 100%; }
   .footer-brand__info { gap: 4px; }
   .footer-brand__info p { font-size: .82rem; line-height: 1.7; }
 }
+
+
+/* =========================================================
+   v25 — final fix: readable product ticker + full phrase marker
+   ========================================================= */
+/* Override the legacy v18 rule that accidentally styled every ticker span. */
+.boundary-runner .boundary-runner__track span {
+  position: static !important;
+  inset: auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+  background: none !important;
+  transform: none !important;
+  animation: none !important;
+  opacity: 1 !important;
+  color: #fff !important;
+}
+.boundary-runner .boundary-runner__track {
+  position: relative;
+  flex: 0 0 auto;
+  width: max-content;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding-inline: 22px;
+  white-space: nowrap;
+  color: #fff;
+  animation: boundaryMarquee 46s linear infinite !important;
+  will-change: transform;
+}
+.boundary-runner .boundary-runner__track span {
+  font: 700 9px/1 var(--font-en) !important;
+  letter-spacing: .20em !important;
+  white-space: nowrap !important;
+}
+.boundary-runner .boundary-runner__track i {
+  display: inline-block;
+  color: rgba(255,255,255,.72);
+  font: 400 9px/1 var(--font-en);
+  font-style: normal;
+  opacity: 1;
+}
+
+/* Start the blue marker at the first character and clone it on every wrapped line. */
+.intro__copy .lead.text-highlight-sweep,
+.intro__copy .lead.text-highlight-sweep--phrases {
+  background-image: none !important;
+}
+.intro__copy .lead .typewriter-content {
+  --marker-progress: var(--text-highlight-progress, 0%);
+  display: inline;
+  padding-inline: .03em;
+  background-image: linear-gradient(90deg,
+    rgba(7,93,232,.14) 0,
+    rgba(7,93,232,.14) var(--marker-progress),
+    transparent var(--marker-progress),
+    transparent 100%);
+  background-repeat: no-repeat;
+  background-size: 100% .42em;
+  background-position: 0 91%;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+@media (max-width: 760px) {
+  .boundary-runner .boundary-runner__track {
+    gap: 18px;
+    padding-inline: 18px;
+    animation-duration: 42s !important;
+  }
+  .boundary-runner .boundary-runner__track span {
+    font-size: 8px !important;
+    letter-spacing: .17em !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boundary-runner .boundary-runner__track { animation: none !important; }
+  .intro__copy .lead .typewriter-content { --marker-progress: 100%; }
+}
+
+
+/* =========================================================
+   v26 HOTFIX — isolated product marquee and stable marker lines
+   ========================================================= */
+/* New class names intentionally avoid every legacy .boundary-runner rule. */
+.product-marquee {
+  position: relative;
+  z-index: 6;
+  width: 100%;
+  height: 16px;
+  min-height: 16px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  background: #075de8;
+  border: 0;
+  contain: layout paint;
+}
+.product-marquee__track {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  width: max-content;
+  color: #fff;
+  transform: translate3d(0,0,0);
+  animation: productMarqueeMove 56s linear infinite;
+  will-change: transform;
+}
+.product-marquee__group {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 18px;
+  padding-right: 18px;
+  white-space: nowrap;
+}
+.product-marquee strong {
+  position: static;
+  display: inline-block;
+  width: auto;
+  margin: 0;
+  padding: 0;
+  color: #fff;
+  background: none;
+  font: 700 8px/1 var(--font-en);
+  letter-spacing: .19em;
+  white-space: nowrap;
+  transform: none;
+  opacity: 1;
+}
+.product-marquee em {
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+  color: rgba(255,255,255,.72);
+  font: 400 8px/1 var(--font-en);
+  font-style: normal;
+  line-height: 1;
+}
+@keyframes productMarqueeMove {
+  from { transform: translate3d(0,0,0); }
+  to { transform: translate3d(-50%,0,0); }
+}
+
+/* Preserve the two intended Japanese phrase lines during typewriter setup. */
+.intro__copy .lead .typewriter-content--segmented {
+  display: block;
+  width: 100%;
+  background: none !important;
+}
+.intro__copy .lead .typewriter-segment {
+  --marker-progress: var(--text-highlight-progress, 0%);
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  padding-inline: .03em;
+  background-image: linear-gradient(rgba(7,93,232,.14), rgba(7,93,232,.14));
+  background-repeat: no-repeat;
+  background-size: var(--marker-progress) .42em;
+  background-position: 0 91%;
+}
+.intro__copy .lead .typewriter-segment + .typewriter-segment {
+  margin-top: .08em;
+}
+/* Disable the old single-inline marker only for segmented copy. */
+.intro__copy .lead .typewriter-content--segmented {
+  background-image: none !important;
+}
+
+@media (max-width: 760px) {
+  .product-marquee { height: 16px; min-height: 16px; }
+  .product-marquee__track { animation-duration: 48s; }
+  .product-marquee__group { gap: 15px; padding-right: 15px; }
+  .product-marquee strong { font-size: 7px; letter-spacing: .16em; }
+  .product-marquee em { font-size: 7px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .product-marquee__track { animation: none; }
+  .intro__copy .lead .typewriter-segment { --marker-progress: 100%; }
+}
