@@ -604,6 +604,13 @@
   window.addEventListener('resize', request, { passive: true });
   render();
 
+  // Keep browser image-assist overlays and accidental dragging off the brand logo.
+  document.querySelectorAll('.brand img, .footer-brand img').forEach((image) => {
+    image.draggable = false;
+    image.setAttribute('draggable', 'false');
+    image.addEventListener('dragstart', (event) => event.preventDefault());
+  });
+
   // Smooth magnetic response for primary buttons on pointer devices.
   if (matchMedia('(pointer:fine)').matches) {
     document.querySelectorAll('.header-entry, .entry-button, .circle-link').forEach((button) => {

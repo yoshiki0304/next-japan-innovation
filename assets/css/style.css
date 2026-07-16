@@ -1230,3 +1230,17 @@ body {
   .mobile-menu__inner { margin-inline: 20px; }
   .mobile-menu a { font-size: clamp(1.45rem, 7.6vw, 1.95rem); }
 }
+
+/* v6: Prevent browser image-action overlays on brand marks while keeping the link clickable. */
+.brand img,
+.footer-brand img {
+  pointer-events: none;
+  -webkit-user-drag: none;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+.brand,
+.footer-brand {
+  -webkit-tap-highlight-color: transparent;
+}
