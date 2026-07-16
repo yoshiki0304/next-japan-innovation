@@ -604,13 +604,6 @@
   window.addEventListener('resize', request, { passive: true });
   render();
 
-  // Keep browser image-assist overlays and accidental dragging off the brand logo.
-  document.querySelectorAll('.brand img, .footer-brand img').forEach((image) => {
-    image.draggable = false;
-    image.setAttribute('draggable', 'false');
-    image.addEventListener('dragstart', (event) => event.preventDefault());
-  });
-
   // Smooth magnetic response for primary buttons on pointer devices.
   if (matchMedia('(pointer:fine)').matches) {
     document.querySelectorAll('.header-entry, .entry-button, .circle-link').forEach((button) => {
@@ -623,4 +616,51 @@
       button.addEventListener('pointerleave', () => { button.style.transform = ''; });
     });
   }
+})();
+
+/* v7 refined technical SVG motion and responsive image focus */
+(() => {
+  'use strict';
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const targets = document.querySelectorAll('.hero, .page-hero, .entry-cta');
+  const ns = 'http://www.w3.org/2000/svg';
+
+  targets.forEach((target, index) => {
+    if (target.querySelector('.motion-svg')) return;
+    const svg = document.createElementNS(ns, 'svg');
+    svg.classList.add('motion-svg');
+    svg.setAttribute('viewBox', '0 0 1000 700');
+    svg.setAttribute('preserveAspectRatio', 'xMidYMid slice');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.innerHTML = `
+      <g class="motion-svg__orbit ${index % 2 ? 'motion-svg__orbit--reverse' : ''}">
+        <circle cx="770" cy="235" r="205"></circle>
+        <circle cx="770" cy="235" r="112" class="motion-svg__dash"></circle>
+        <line x1="565" y1="235" x2="975" y2="235"></line>
+        <line x1="770" y1="30" x2="770" y2="440"></line>
+        <circle class="motion-svg__dot" cx="914" cy="90" r="4"></circle>
+      </g>
+      <path class="motion-svg__dash" d="M-40 565 C180 410 280 650 505 490 S850 310 1060 455"></path>
+      <circle class="motion-svg__dot" cx="505" cy="490" r="4"></circle>`;
+    target.append(svg);
+  });
+
+  if (!reduced && 'IntersectionObserver' in window) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        const svg = entry.target.querySelector('.motion-svg');
+        if (svg) svg.style.animationPlayState = entry.isIntersecting ? 'running' : 'paused';
+      });
+    }, { threshold: .04 });
+    targets.forEach((target) => observer.observe(target));
+  }
+
+  const setImageFocus = () => {
+    const narrow = window.innerWidth <= 760;
+    document.querySelectorAll('.hero__media img, .page-hero__media img').forEach((img) => {
+      img.style.objectPosition = narrow ? (img.dataset.mobilePosition || '50% 50%') : '';
+    });
+  };
+  setImageFocus();
+  window.addEventListener('resize', setImageFocus, { passive: true });
 })();

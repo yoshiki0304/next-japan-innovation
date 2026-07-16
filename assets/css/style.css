@@ -1231,16 +1231,154 @@ body {
   .mobile-menu a { font-size: clamp(1.45rem, 7.6vw, 1.95rem); }
 }
 
-/* v6: Prevent browser image-action overlays on brand marks while keeping the link clickable. */
-.brand img,
-.footer-brand img {
-  pointer-events: none;
-  -webkit-user-drag: none;
-  user-select: none;
-  -webkit-user-select: none;
-  touch-action: none;
+/* =========================================================
+   v7 final polish: restored mobile header, typography,
+   responsive integrity and refined motion
+   ========================================================= */
+:root {
+  --font-ja: "Hiragino Kaku Gothic ProN", "Yu Gothic", "YuGothic", "Noto Sans JP", sans-serif;
+  --font-en: "Avenir Next", Avenir, "Helvetica Neue", Arial, sans-serif;
 }
-.brand,
-.footer-brand {
-  -webkit-tap-highlight-color: transparent;
+
+html { text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; }
+body { font-feature-settings: "palt" 1; }
+img { display: block; }
+
+/* Refined image treatment: natural contrast without an artificial filter. */
+.hero__media img,
+.page-hero__media img,
+.portal-card__image img,
+.photo img,
+.business-visual img,
+.message__media img {
+  filter: saturate(.96) contrast(1.035) brightness(.98);
+}
+
+/* SVG technical-motion layer created by JavaScript. */
+.motion-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 3;
+  pointer-events: none;
+  overflow: visible;
+  opacity: .72;
+  mix-blend-mode: screen;
+}
+.motion-svg circle,
+.motion-svg path,
+.motion-svg line {
+  vector-effect: non-scaling-stroke;
+  fill: none;
+  stroke: rgba(133, 178, 255, .24);
+  stroke-width: 1;
+}
+.motion-svg .motion-svg__dash { stroke-dasharray: 5 13; animation: svgDash 16s linear infinite; }
+.motion-svg .motion-svg__orbit { transform-origin: center; animation: svgOrbit 24s linear infinite; }
+.motion-svg .motion-svg__orbit--reverse { animation-direction: reverse; animation-duration: 31s; }
+.motion-svg .motion-svg__dot { fill: #8bb8ff; stroke: rgba(255,255,255,.9); stroke-width: .6; animation: svgPulse 2.8s ease-in-out infinite; }
+@keyframes svgDash { to { stroke-dashoffset: -180; } }
+@keyframes svgOrbit { to { transform: rotate(360deg); } }
+@keyframes svgPulse { 50% { opacity: .35; transform: scale(.72); } }
+
+/* More controlled typography and natural line wrapping. */
+.hero__title,
+.page-hero h1,
+.section-heading h2,
+.entry-cta h2,
+.message__content h2,
+.feature-link h2 {
+  text-wrap: balance;
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+p, li { line-break: strict; }
+.section-heading h2 { max-width: 13ch; }
+
+/* Refined page transition: vertical curtain + content fade. */
+.page-transition::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 35%, rgba(69,136,255,.16), transparent 65%);
+  transform: translateX(-120%);
+}
+body.is-leaving .page-transition::after { animation: transitionSheen .62s .08s var(--ease) forwards; }
+@keyframes transitionSheen { to { transform: translateX(120%); } }
+
+/* Restore the original visual weight of the mobile header while preserving fit. */
+@media (max-width: 760px) {
+  .site-header,
+  body.inner-page .site-header {
+    display: flex;
+    align-items: center;
+    height: 74px;
+    padding: 0 14px;
+    gap: 8px;
+  }
+  .site-header.is-scrolled { height: 70px; }
+  .brand { flex: 1 1 auto; min-width: 0; overflow: visible; }
+  .brand img { width: clamp(154px, 42vw, 178px); max-width: 100%; }
+  .brand span { display: none; }
+  .header-entry {
+    flex: 0 0 clamp(136px, 36vw, 154px);
+    width: clamp(136px, 36vw, 154px);
+    max-width: none;
+    min-height: 48px;
+    padding: 13px 16px;
+    gap: 10px;
+    justify-content: space-between;
+    overflow: visible;
+  }
+  .header-entry span {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: nowrap;
+    font-size: clamp(.68rem, 2.8vw, .78rem);
+  }
+  .header-entry i { display: block; }
+  .menu-button { flex: 0 0 42px; width: 42px; min-width: 42px; height: 42px; }
+
+  .hero { min-height: max(760px, 100svh); }
+  .page-hero { min-height: min(760px, 88svh); }
+  .hero__media img, .page-hero__media img { object-position: center center; }
+  .page-hero__content { width: 100%; }
+
+  .section { padding: 82px 0; }
+  .entry-cta__inner { padding: 82px 0; }
+  .section-heading h2 { max-width: 10ch; }
+  .portal-card { min-height: 380px; }
+
+  .motion-svg { opacity: .55; }
+}
+
+@media (max-width: 420px) {
+  .site-header,
+  body.inner-page .site-header { padding-inline: 10px; gap: 6px; }
+  .brand img { width: clamp(148px, 41vw, 170px); }
+  .header-entry { flex-basis: 132px; width: 132px; padding-inline: 13px; }
+  .menu-button { flex-basis: 40px; width: 40px; min-width: 40px; }
+  .hero__title { font-size: clamp(3.5rem, 17.5vw, 4.65rem); }
+  .page-hero h1 { font-size: clamp(3rem, 14.5vw, 4.5rem); }
+  .section-heading h2 { font-size: clamp(2.05rem, 10vw, 3rem); }
+}
+
+@media (max-width: 374px) {
+  .brand img { width: 142px; }
+  .header-entry { flex-basis: 118px; width: 118px; padding-inline: 11px; }
+  .header-entry i { display: none; }
+  .header-entry span { font-size: .65rem; }
+}
+
+@media (min-width: 761px) and (max-width: 1100px) {
+  .global-nav { gap: 15px; margin-right: 16px; }
+  .global-nav a { font-size: .7rem; }
+  .brand img { width: 170px; }
+  .brand span { max-width: 180px; font-size: .56rem; }
+  .header-entry { min-width: 142px; padding-inline: 18px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-svg * { animation: none !important; }
 }
