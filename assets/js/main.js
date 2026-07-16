@@ -859,7 +859,10 @@
   document.querySelectorAll('.business-service h2, .portal-card h3, .workstyle-card h3, .partner-type h3, .process-card strong, .home-job-link strong, .job-card__head h3').forEach((el) => {
     el.classList.add('text-word-rise');
   });
-  document.querySelectorAll('.lead').forEach((el) => el.classList.add('text-highlight-sweep'));
+  document.querySelectorAll('.lead').forEach((el) => {
+    el.classList.add('text-highlight-sweep');
+    if (el.querySelector('.phrase')) el.classList.add('text-highlight-sweep--phrases');
+  });
 
   if (reduce || !gsapReady) {
     document.documentElement.classList.add('text-motion-ready');
