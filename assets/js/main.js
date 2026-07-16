@@ -739,3 +739,42 @@
   applyMobileTypography();
   window.addEventListener('resize', applyMobileTypography, { passive: true });
 })();
+
+/* v15: scroll-linked flowing typography and left-to-right text reveals */
+(() => {
+  'use strict';
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const hero = document.querySelector('main > .hero, main > .page-hero');
+  if (hero && !document.querySelector('.flowing-type')) {
+    const strip = document.createElement('section');
+    strip.className = 'flowing-type';
+    strip.setAttribute('aria-hidden', 'true');
+    const phrase = document.body.classList.contains('column-page') ? 'NEWS & INSIGHTS' : 'NEXT JAPAN INNOVATION';
+    strip.innerHTML = `<div class="flowing-type__track">${Array.from({length:4},()=>`<div class="flowing-type__item"><span>${phrase}</span><i></i><span>WE CREATE THE NEXT STANDARD</span><i></i></div>`).join('')}</div>`;
+    hero.insertAdjacentElement('afterend', strip);
+  }
+
+  const candidates = document.querySelectorAll('.section-heading h2, .news-heading h2, .entry-cta h2, .message-copy h2, .philosophy-copy h2');
+  candidates.forEach((el) => {
+    if (el.closest('.motion-word') || el.dataset.slidePrepared === '1') return;
+    el.dataset.slidePrepared = '1';
+    const inner = document.createElement('span');
+    inner.className = 'slide-reveal__inner';
+    while (el.firstChild) inner.appendChild(el.firstChild);
+    el.appendChild(inner);
+    el.classList.add('slide-reveal');
+  });
+
+  if (reduce || !window.gsap || !window.ScrollTrigger) {
+    document.querySelectorAll('.slide-reveal__inner').forEach(el => { el.style.transform='none'; el.style.opacity='1'; });
+    return;
+  }
+  gsap.registerPlugin(ScrollTrigger);
+  document.querySelectorAll('.flowing-type').forEach((strip, idx) => {
+    const track = strip.querySelector('.flowing-type__track');
+    gsap.fromTo(track, {xPercent: idx % 2 ? -18 : -42}, {xPercent: idx % 2 ? -42 : -18, ease:'none', scrollTrigger:{trigger:strip,start:'top bottom',end:'bottom top',scrub:1.1}});
+  });
+  document.querySelectorAll('.slide-reveal__inner').forEach((inner) => {
+    gsap.to(inner,{xPercent:0,opacity:1,duration:1.05,ease:'power4.out',scrollTrigger:{trigger:inner.parentElement,start:'top 88%',once:true}});
+  });
+})();
