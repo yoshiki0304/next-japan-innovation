@@ -1511,3 +1511,111 @@ html.lenis, html.lenis body { height: auto; }
   .page-hero { min-height: 68svh; }
   .page-hero h1 { font-size: clamp(4rem, 9vw, 6rem); }
 }
+
+/* =========================================================
+   v12 — mobile overflow and natural line-break correction
+   ========================================================= */
+html, body { max-width: 100%; overflow-x: clip; }
+img, svg, video, canvas { max-width: 100%; }
+
+@media (max-width: 760px) {
+  /* The home hero must fit the real CSS viewport, including 320–430px phones. */
+  .hero { min-height: max(700px, 100svh); overflow: hidden; }
+  .hero__content {
+    width: calc(100vw - 36px);
+    max-width: none;
+    padding: 118px 0 52px;
+  }
+  .hero__label {
+    max-width: 100%;
+    margin-bottom: 18px;
+    font-size: clamp(.58rem, 2.6vw, .68rem);
+    letter-spacing: .12em;
+  }
+  .hero__title {
+    width: 100%;
+    max-width: 100%;
+    font-size: clamp(2.8rem, 13.2vw, 3.75rem) !important;
+    line-height: 1.02 !important;
+    letter-spacing: -.065em !important;
+    word-break: keep-all;
+    overflow-wrap: normal;
+  }
+  .hero__title > span {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+  }
+  .hero__title .outline {
+    margin: 8px 0 0;
+    -webkit-text-stroke-width: 1px;
+  }
+  .hero__bottom {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    margin-top: 36px;
+  }
+  .hero__bottom .heading-phrases {
+    width: 100%;
+    max-width: 100%;
+    font-size: clamp(1.12rem, 5.7vw, 1.42rem) !important;
+    line-height: 1.58 !important;
+    letter-spacing: -.025em !important;
+    word-break: normal !important;
+    overflow-wrap: anywhere !important;
+    text-wrap: pretty;
+  }
+  .hero__bottom .heading-phrases .phrase {
+    display: inline;
+  }
+  .hero__bottom .heading-phrases .phrase + .phrase::before {
+    content: " ";
+  }
+  .hero__actions {
+    margin-top: 26px;
+    gap: 12px;
+  }
+  .circle-link {
+    width: 88px;
+    min-width: 88px;
+    font-size: .65rem;
+  }
+  .hero__number { display: none; }
+
+  /* Never let animation wrappers turn a complete Japanese sentence into
+     one unbreakable inline block on small screens. */
+  .hero .motion-word,
+  .hero .motion-word > span,
+  .page-hero .motion-word,
+  .page-hero .motion-word > span,
+  .section-heading .motion-word,
+  .section-heading .motion-word > span,
+  .entry-cta .motion-word,
+  .entry-cta .motion-word > span {
+    display: inline;
+    overflow: visible;
+    transform: none !important;
+  }
+
+  .page-hero h1,
+  .section-heading h2,
+  .entry-cta h2,
+  .message__content h2,
+  .feature-link h2 {
+    max-width: 100% !important;
+    word-break: normal !important;
+    overflow-wrap: anywhere !important;
+    text-wrap: pretty;
+  }
+
+  .ticker { overflow: hidden; }
+  .ticker__track { width: max-content; }
+}
+
+@media (max-width: 390px) {
+  .hero__content { width: calc(100vw - 30px); padding-top: 108px; }
+  .hero__title { font-size: clamp(2.58rem, 12.9vw, 3.25rem) !important; }
+  .hero__bottom .heading-phrases { font-size: clamp(1.02rem, 5.4vw, 1.25rem) !important; }
+  .circle-link { width: 82px; min-width: 82px; }
+}
