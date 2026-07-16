@@ -47,18 +47,8 @@ v7改善内容
 2. 「新しいブログ」を作成し、公開範囲を一般公開に設定
 3. 記事作成画面でタイトル、本文、写真を入力して公開
 4. assets/js/column-config.js を開く
-5. blogUrl の https://nextji-column.blogspot.com を、ご自身のBlogger URLへ変更
+5. blogUrl の https://YOUR-BLOG-NAME.blogspot.com を、ご自身のBlogger URLへ変更
 6. GitHubへ上書きアップロード
 
 以後はBloggerで記事を公開するだけで、column.htmlへ自動反映されます。
 Blogger本体、記事投稿、写真掲載、JSONフィードの利用に追加料金はかかりません。
-
-【v10 レスポンシブ全面改善】
-- 320px〜430pxのスマートフォンUIを再設計
-- 見出しサイズ、行間、改行、CTA高さ、セクション余白を最適化
-- フッターナビゲーションをスマートフォンで1列表示
-- 画像トリミングとファーストビュー高さを端末別に調整
-- GSAP ScrollTriggerによるテキストマスク、パララックス、スクロール演出
-- Lenisによるスムーズスクロール（CDNが読み込めない場合も通常動作）
-- タブレット専用レイアウトを追加
-- OSの「視差効果を減らす」設定に対応
