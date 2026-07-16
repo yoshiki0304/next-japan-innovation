@@ -47,7 +47,7 @@ v7改善内容
 2. 「新しいブログ」を作成し、公開範囲を一般公開に設定
 3. 記事作成画面でタイトル、本文、写真を入力して公開
 4. assets/js/column-config.js を開く
-5. blogUrl の https://YOUR-BLOG-NAME.blogspot.com を、ご自身のBlogger URLへ変更
+5. blogUrl の https://nextji-column.blogspot.com を、ご自身のBlogger URLへ変更
 6. GitHubへ上書きアップロード
 
 以後はBloggerで記事を公開するだけで、column.htmlへ自動反映されます。
