@@ -301,6 +301,219 @@
     });
   }
 
+
+  // Kinetic line-and-orbit backgrounds inspired by the reference site's technical motion language.
+  // The canvas is generated at runtime, so no external library or video asset is required.
+  if (!reducedMotion) {
+    const motionScenes = [];
+    const motionTargets = [...new Set(qsa('.hero, .page-hero, .business-intro, .section--dark, .entry-cta'))];
+
+    const seededRandom = (seed) => {
+      let value = seed % 2147483647;
+      if (value <= 0) value += 2147483646;
+      return () => (value = value * 16807 % 2147483647) / 2147483647;
+    };
+
+    const buildNodes = (count, seed) => {
+      const random = seededRandom(seed);
+      return Array.from({ length: count }, () => ({
+        x: random(),
+        y: random(),
+        phase: random() * Math.PI * 2,
+        speed: .12 + random() * .22,
+        amplitude: .012 + random() * .026,
+        size: .8 + random() * 1.9,
+      }));
+    };
+
+    const resizeScene = (scene) => {
+      const rect = scene.element.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.75);
+      const width = Math.max(Math.round(rect.width), 1);
+      const height = Math.max(Math.round(rect.height), 1);
+      scene.width = width;
+      scene.height = height;
+      scene.canvas.width = Math.round(width * dpr);
+      scene.canvas.height = Math.round(height * dpr);
+      scene.canvas.style.width = `${width}px`;
+      scene.canvas.style.height = `${height}px`;
+      scene.context.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const count = width < 760 ? 8 : width < 1100 ? 12 : 17;
+      scene.nodes = buildNodes(count, scene.seed);
+    };
+
+    motionTargets.forEach((element, index) => {
+      const canvas = document.createElement('canvas');
+      const isLight = element.classList.contains('business-intro');
+      canvas.className = `motion-canvas ${isLight ? 'motion-canvas--light' : 'motion-canvas--dark'}`;
+      canvas.setAttribute('aria-hidden', 'true');
+      element.append(canvas);
+
+      const scene = {
+        element,
+        canvas,
+        context: canvas.getContext('2d', { alpha: true }),
+        isLight,
+        isVisible: true,
+        width: 1,
+        height: 1,
+        pointerX: 0,
+        pointerY: 0,
+        targetX: 0,
+        targetY: 0,
+        nodes: [],
+        seed: 191 + index * 97,
+        index,
+      };
+
+      element.addEventListener('pointermove', (event) => {
+        const rect = element.getBoundingClientRect();
+        scene.targetX = clamp((event.clientX - rect.left) / rect.width - .5, -.5, .5);
+        scene.targetY = clamp((event.clientY - rect.top) / rect.height - .5, -.5, .5);
+      }, { passive: true });
+      element.addEventListener('pointerleave', () => {
+        scene.targetX = 0;
+        scene.targetY = 0;
+      });
+
+      if ('ResizeObserver' in window) {
+        const observer = new ResizeObserver(() => resizeScene(scene));
+        observer.observe(element);
+      }
+
+      motionScenes.push(scene);
+      resizeScene(scene);
+    });
+
+    if ('IntersectionObserver' in window) {
+      const sceneObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          const scene = motionScenes.find((item) => item.element === entry.target);
+          if (scene) scene.isVisible = entry.isIntersecting;
+        });
+      }, { rootMargin: '15% 0px 15% 0px', threshold: 0 });
+      motionScenes.forEach((scene) => sceneObserver.observe(scene.element));
+    }
+
+    const drawMotionScene = (scene, timestamp) => {
+      if (!scene.isVisible || !scene.context) return;
+      const { context: ctx, width, height } = scene;
+      const time = timestamp * .001;
+      const rect = scene.element.getBoundingClientRect();
+      const viewportProgress = clamp((window.innerHeight - rect.top) / (window.innerHeight + rect.height), 0, 1);
+
+      scene.pointerX += (scene.targetX - scene.pointerX) * .035;
+      scene.pointerY += (scene.targetY - scene.pointerY) * .035;
+
+      const dark = !scene.isLight;
+      const line = dark ? '122,169,247' : '7,93,232';
+      const bright = dark ? '210,229,255' : '0,55,132';
+      const shiftX = scene.pointerX * 26;
+      const shiftY = scene.pointerY * 20 + (viewportProgress - .5) * 20;
+
+      ctx.clearRect(0, 0, width, height);
+      ctx.save();
+      ctx.translate(shiftX, shiftY);
+
+      // Slow technical grid. Offset changes continuously so the background is visibly alive.
+      const spacing = width < 760 ? 84 : 118;
+      const offsetX = (time * 7 + scene.index * 23) % spacing;
+      const offsetY = (time * 4 + scene.index * 31) % spacing;
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = `rgba(${line},${dark ? .055 : .07})`;
+      ctx.beginPath();
+      for (let x = -spacing + offsetX; x < width + spacing; x += spacing) {
+        ctx.moveTo(x, -40);
+        ctx.lineTo(x, height + 40);
+      }
+      for (let y = -spacing + offsetY; y < height + spacing; y += spacing) {
+        ctx.moveTo(-40, y);
+        ctx.lineTo(width + 40, y);
+      }
+      ctx.stroke();
+
+      // Large orbital geometry similar to engineering diagrams.
+      const minSide = Math.min(width, height);
+      const orbitData = [
+        { x: .82, y: .42, r: .34, speed: .16, phase: .2 },
+        { x: .68, y: .72, r: .19, speed: -.24, phase: 2.2 },
+        { x: .18, y: .28, r: .13, speed: .31, phase: 4.1 },
+      ];
+      orbitData.forEach((orbit, orbitIndex) => {
+        const radius = Math.max(minSide * orbit.r, 56);
+        const cx = width * orbit.x + Math.sin(time * .12 + orbit.phase) * 16;
+        const cy = height * orbit.y + Math.cos(time * .1 + orbit.phase) * 12;
+        ctx.strokeStyle = `rgba(${line},${dark ? .13 : .11})`;
+        ctx.lineWidth = orbitIndex === 0 ? 1.1 : .8;
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        const angle = time * orbit.speed + orbit.phase + viewportProgress * .8;
+        const px = cx + Math.cos(angle) * radius;
+        const py = cy + Math.sin(angle) * radius;
+        ctx.fillStyle = `rgba(${bright},${dark ? .86 : .72})`;
+        ctx.shadowColor = `rgba(${line},.8)`;
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.arc(px, py, orbitIndex === 0 ? 3.2 : 2.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      });
+
+      // Floating nodes and proximity connections.
+      const positions = scene.nodes.map((node) => ({
+        x: node.x * width + Math.sin(time * node.speed + node.phase) * width * node.amplitude,
+        y: node.y * height + Math.cos(time * node.speed * .86 + node.phase) * height * node.amplitude,
+        size: node.size,
+      }));
+
+      for (let i = 0; i < positions.length; i += 1) {
+        for (let j = i + 1; j < positions.length; j += 1) {
+          const dx = positions[i].x - positions[j].x;
+          const dy = positions[i].y - positions[j].y;
+          const distance = Math.hypot(dx, dy);
+          const limit = width < 760 ? 125 : 190;
+          if (distance >= limit) continue;
+          const alpha = (1 - distance / limit) * (dark ? .17 : .13);
+          ctx.strokeStyle = `rgba(${line},${alpha})`;
+          ctx.lineWidth = .75;
+          ctx.beginPath();
+          ctx.moveTo(positions[i].x, positions[i].y);
+          ctx.lineTo(positions[j].x, positions[j].y);
+          ctx.stroke();
+        }
+      }
+
+      positions.forEach((point, pointIndex) => {
+        const pulse = .55 + Math.sin(time * .9 + pointIndex) * .25;
+        ctx.fillStyle = `rgba(${bright},${dark ? .34 + pulse * .28 : .24 + pulse * .2})`;
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, point.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // A moving scan line makes the animation legible even when the pointer is still.
+      const scanY = ((time * 22 + scene.index * 83) % (height + 180)) - 90;
+      const gradient = ctx.createLinearGradient(0, scanY - 45, 0, scanY + 45);
+      gradient.addColorStop(0, `rgba(${line},0)`);
+      gradient.addColorStop(.5, `rgba(${line},${dark ? .09 : .065})`);
+      gradient.addColorStop(1, `rgba(${line},0)`);
+      ctx.fillStyle = gradient;
+      ctx.fillRect(-40, scanY - 45, width + 80, 90);
+
+      ctx.restore();
+    };
+
+    const animateMotionBackgrounds = (timestamp) => {
+      motionScenes.forEach((scene) => drawMotionScene(scene, timestamp));
+      requestAnimationFrame(animateMotionBackgrounds);
+    };
+    requestAnimationFrame(animateMotionBackgrounds);
+
+    window.addEventListener('resize', () => motionScenes.forEach(resizeScene), { passive: true });
+  }
+
   backToTop?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' }));
 
   // Smooth full-page transition for local HTML navigation.
