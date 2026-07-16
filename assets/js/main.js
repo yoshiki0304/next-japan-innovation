@@ -576,3 +576,44 @@
   }
 
 })();
+
+/* v4 motion refinement */
+(() => {
+  'use strict';
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduced) return;
+
+  // Give large sections a subtle scroll-linked depth without moving text enough to hurt readability.
+  const layers = [...document.querySelectorAll('.section-heading, .portal-card__image, .feature-link, .business-service, .photo')];
+  let frame = 0;
+  const render = () => {
+    const vh = window.innerHeight || 1;
+    layers.forEach((el) => {
+      const rect = el.getBoundingClientRect();
+      if (rect.bottom < -120 || rect.top > vh + 120) return;
+      const center = rect.top + rect.height / 2;
+      const progress = Math.max(-1, Math.min(1, (center - vh / 2) / vh));
+      el.style.setProperty('--scroll-shift', `${(-progress * 8).toFixed(2)}px`);
+    });
+    frame = 0;
+  };
+  const request = () => {
+    if (!frame) frame = requestAnimationFrame(render);
+  };
+  window.addEventListener('scroll', request, { passive: true });
+  window.addEventListener('resize', request, { passive: true });
+  render();
+
+  // Smooth magnetic response for primary buttons on pointer devices.
+  if (matchMedia('(pointer:fine)').matches) {
+    document.querySelectorAll('.header-entry, .entry-button, .circle-link').forEach((button) => {
+      button.addEventListener('pointermove', (event) => {
+        const r = button.getBoundingClientRect();
+        const x = event.clientX - (r.left + r.width / 2);
+        const y = event.clientY - (r.top + r.height / 2);
+        button.style.transform = `translate(${(x * .09).toFixed(1)}px, ${(y * .09).toFixed(1)}px)`;
+      });
+      button.addEventListener('pointerleave', () => { button.style.transform = ''; });
+    });
+  }
+})();
