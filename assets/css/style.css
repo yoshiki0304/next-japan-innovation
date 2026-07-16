@@ -1736,3 +1736,88 @@ img, svg, video, canvas { max-width: 100%; }
 .news-loading{padding:56px 0;text-align:center;color:#64748b;letter-spacing:.08em}
 @media(max-width:760px){.flowing-type{padding:14px 0}.flowing-type__item{font-size:clamp(2rem,12vw,3.6rem);gap:28px;padding-right:28px}.flowing-type__item i{width:32px}}
 @media(prefers-reduced-motion:reduce){.flowing-type__track{transform:none!important}.slide-reveal>.slide-reveal__inner{transform:none!important;opacity:1!important}}
+
+
+/* =========================================================
+   v16 — typography clipping fix / flowing banner removal
+   ========================================================= */
+.ticker,
+.flowing-type { display: none !important; }
+
+/* Never clip headings or Japanese copy during reveal animations. */
+[data-motion-heading],
+.section-heading h2,
+.heading-phrases,
+.hero__title,
+.hero__bottom p,
+.business-overview__copy,
+.intro__copy,
+.page-hero__inner {
+  overflow: visible !important;
+  clip-path: none !important;
+  max-width: 100%;
+}
+
+.motion-word {
+  overflow: visible !important;
+  white-space: normal !important;
+  max-width: 100%;
+}
+
+/* Natural Japanese wrapping without creating one unbreakable giant word. */
+.section-heading h2,
+.heading-phrases,
+.hero__bottom p,
+.business-overview__copy p,
+.intro__copy p,
+.page-hero h1,
+.page-hero__lead,
+.message-preview__copy h2,
+.message__content h2,
+.entry-cta h2 {
+  word-break: normal !important;
+  overflow-wrap: anywhere !important;
+  line-break: strict;
+  text-wrap: pretty;
+}
+
+.heading-phrases .phrase {
+  max-width: 100%;
+  white-space: normal !important;
+}
+
+/* Keep two-column copy inside its own grid cell. */
+.business-overview__grid > *,
+.intro__grid > *,
+.culture-top > *,
+.jobs-intro > *,
+.message-preview__grid > *,
+.message__grid > * {
+  min-width: 0;
+}
+
+@media (min-width: 761px) {
+  .section-heading h2,
+  .heading-phrases { font-size: clamp(2.6rem, 4.6vw, 4.8rem); }
+  .business-overview__grid { gap: clamp(52px, 7vw, 112px); }
+}
+
+@media (max-width: 760px) {
+  .section-heading h2,
+  .heading-phrases,
+  .hero__bottom .heading-phrases {
+    word-break: normal !important;
+    overflow-wrap: anywhere !important;
+    text-wrap: pretty;
+  }
+  .heading-phrases .phrase { display: block; }
+}
+
+/* v17: headings controlled by scroll-linked GSAP motion. */
+[data-motion-heading] {
+  will-change: transform, opacity, filter;
+  transform-origin: left center;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-motion-heading] { opacity: 1 !important; transform: none !important; filter: none !important; }
+}
