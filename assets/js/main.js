@@ -752,3 +752,90 @@
 
 
 /* v17: scroll-scrubbed heading entrance/reverse exit. */
+
+/* v20: fast scroll-entry typewriter for the TOP introduction copy. */
+(() => {
+  'use strict';
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const groups = [...document.querySelectorAll('[data-typewriter-group]')];
+  if (!groups.length) return;
+
+  groups.forEach((group) => {
+    const lines = [...group.querySelectorAll(':scope > p')];
+    const timers = [];
+    let running = false;
+
+    const clearTimers = () => {
+      while (timers.length) window.clearTimeout(timers.pop());
+      running = false;
+    };
+
+    lines.forEach((line) => {
+      const text = line.textContent.trim();
+      line.setAttribute('aria-label', text);
+      line.classList.add('typewriter-line');
+      line.textContent = '';
+      [...text].forEach((character) => {
+        const span = document.createElement('span');
+        span.className = 'typewriter-char';
+        span.setAttribute('aria-hidden', 'true');
+        span.textContent = character;
+        line.appendChild(span);
+      });
+    });
+
+    if (reduce) {
+      group.querySelectorAll('.typewriter-char').forEach((char) => char.classList.add('is-typed'));
+      return;
+    }
+
+    group.classList.add('typewriter-ready');
+
+    const reset = () => {
+      clearTimers();
+      group.classList.remove('is-typing');
+      lines.forEach((line) => line.classList.remove('is-current'));
+      group.querySelectorAll('.typewriter-char').forEach((char) => char.classList.remove('is-typed'));
+    };
+
+    const play = () => {
+      if (running) return;
+      clearTimers();
+      running = true;
+      group.classList.add('is-typing');
+      let cursor = 0;
+      lines.forEach((line, lineIndex) => {
+        const chars = [...line.querySelectorAll('.typewriter-char')];
+        const lineStart = cursor;
+        timers.push(window.setTimeout(() => {
+          lines.forEach((item) => item.classList.remove('is-current'));
+          line.classList.add('is-current');
+        }, lineStart));
+        chars.forEach((char, charIndex) => {
+          // Fast enough to feel like live input, but still visibly sequential.
+          const delay = lineStart + charIndex * (lineIndex === 0 ? 24 : 12);
+          timers.push(window.setTimeout(() => char.classList.add('is-typed'), delay));
+        });
+        cursor += chars.length * (lineIndex === 0 ? 24 : 12) + (lineIndex === 0 ? 150 : 90);
+      });
+      timers.push(window.setTimeout(() => {
+        lines.forEach((line) => line.classList.remove('is-current'));
+        group.classList.remove('is-typing');
+        running = false;
+      }, cursor + 80));
+    };
+
+    reset();
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) play();
+          else if (entry.boundingClientRect.top > 0) reset();
+        });
+      }, { threshold: .34, rootMargin: '0px 0px -8% 0px' });
+      observer.observe(group);
+    } else {
+      play();
+    }
+  });
+})();
