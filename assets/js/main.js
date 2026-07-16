@@ -1,3 +1,4 @@
+
 (() => {
   const loader = document.querySelector('.page-loader');
   const header = document.querySelector('[data-header]');
@@ -8,28 +9,34 @@
   const jobCards = document.querySelectorAll('.job-card');
 
   window.addEventListener('load', () => {
-    window.setTimeout(() => loader?.classList.add('is-hidden'), 350);
+    window.setTimeout(() => loader?.classList.add('is-hidden'), 280);
   });
 
   const onScroll = () => {
-    header?.classList.toggle('is-scrolled', window.scrollY > 40);
+    if (!document.body.classList.contains('inner-page')) {
+      header?.classList.toggle('is-scrolled', window.scrollY > 40);
+    }
     parallaxItems.forEach((item) => {
       const speed = Number(item.dataset.parallax || 0);
-      item.style.transform = `translate3d(0, ${window.scrollY * speed}px, 0) scale(1.06)`;
+      item.style.transform = `translate3d(0, ${window.scrollY * speed}px, 0) scale(1.055)`;
     });
   };
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
 
-  const revealObserver = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('is-visible');
-        revealObserver.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.12 });
-  revealItems.forEach((item) => revealObserver.observe(item));
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+    revealItems.forEach((item) => observer.observe(item));
+  } else {
+    revealItems.forEach((item) => item.classList.add('is-visible'));
+  }
 
   menuButton?.addEventListener('click', () => {
     const open = menuButton.getAttribute('aria-expanded') === 'true';
@@ -64,25 +71,19 @@
   if (window.matchMedia('(pointer: fine)').matches) {
     const dot = document.querySelector('.cursor-dot');
     const ring = document.querySelector('.cursor-ring');
-    let mouseX = 0;
-    let mouseY = 0;
-    let ringX = 0;
-    let ringY = 0;
-
+    let mouseX = 0, mouseY = 0, ringX = 0, ringY = 0;
     window.addEventListener('mousemove', (event) => {
       mouseX = event.clientX;
       mouseY = event.clientY;
       if (dot) dot.style.transform = `translate(${mouseX}px, ${mouseY}px) translate(-50%, -50%)`;
     });
-
-    const animateCursor = () => {
-      ringX += (mouseX - ringX) * 0.16;
-      ringY += (mouseY - ringY) * 0.16;
+    const animate = () => {
+      ringX += (mouseX - ringX) * .16;
+      ringY += (mouseY - ringY) * .16;
       if (ring) ring.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%, -50%)`;
-      requestAnimationFrame(animateCursor);
+      requestAnimationFrame(animate);
     };
-    animateCursor();
-
+    animate();
     document.querySelectorAll('a, button').forEach((target) => {
       target.addEventListener('mouseenter', () => ring?.classList.add('is-hover'));
       target.addEventListener('mouseleave', () => ring?.classList.remove('is-hover'));

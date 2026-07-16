@@ -1,24 +1,18 @@
-株式会社Next Japan Innovation 採用サイト
+株式会社Next Japan Innovation 採用サイト（複数ページ版）
 
-■ ファイル構成
-index.html
-assets/css/style.css
-assets/js/main.js
-assets/images/
+■ ページ構成
+index.html      採用サイトトップ
+business.html   事業紹介
+culture.html    働く環境・価値観
+company.html    代表メッセージ・会社情報
+jobs.html       募集職種・選考フロー
+entry.html      エントリー案内
+assets/         CSS・JavaScript・画像
 
-■ 公開方法（GitHub Pages）
-1. GitHubの公開用リポジトリを開く
-2. このフォルダ内のファイルとassetsフォルダを、そのままアップロード
-3. Settings → Pages → Deploy from a branch
-4. Branchをmain、フォルダを/(root)にしてSave
+■ GitHubへのアップロード
+既存の会社ホームページ内に追加する場合は、この「nextji-recruit-hp」フォルダの名前を「recruit」に変更し、フォルダごとアップロードしてください。
+公開URL例：
+https://yoshiki0304.github.io/nextji-hp/recruit/
 
-■ 編集箇所
-・文章／募集職種：index.html
-・配色／余白／スマホ表示：assets/css/style.css
-・アニメーション：assets/js/main.js
-
-■ 現在のエントリー先
-・メール：info@next-ji.jp
-・お問い合わせ：https://www.next-ji.jp/contact/
-
-※給与・勤務時間・福利厚生など未確定の条件は掲載していません。
+■ 注意
+index.htmlだけではなく、上記HTMLファイルとassetsフォルダをすべて一緒にアップロードしてください。
