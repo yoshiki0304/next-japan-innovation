@@ -813,10 +813,14 @@
         }, lineStart));
         chars.forEach((char, charIndex) => {
           // Fast enough to feel like live input, but still visibly sequential.
-          const delay = lineStart + charIndex * (lineIndex === 0 ? 24 : 12);
+          const mobile = window.matchMedia('(max-width: 760px)').matches;
+          const leadSpeed = mobile ? 20 : 24;
+          const bodySpeed = mobile ? 10 : 12;
+          const delay = lineStart + charIndex * (lineIndex === 0 ? leadSpeed : bodySpeed);
           timers.push(window.setTimeout(() => char.classList.add('is-typed'), delay));
         });
-        cursor += chars.length * (lineIndex === 0 ? 24 : 12) + (lineIndex === 0 ? 150 : 90);
+        const mobile = window.matchMedia('(max-width: 760px)').matches;
+        cursor += chars.length * (lineIndex === 0 ? (mobile ? 20 : 24) : (mobile ? 10 : 12)) + (lineIndex === 0 ? 130 : 75);
       });
       timers.push(window.setTimeout(() => {
         lines.forEach((line) => line.classList.remove('is-current'));
@@ -838,4 +842,83 @@
       play();
     }
   });
+})();
+
+/* =========================================================
+   v22 — mobile typewriter + unified contemporary text motion
+   ========================================================= */
+(() => {
+  'use strict';
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const gsapReady = typeof window.gsap !== 'undefined' && typeof window.ScrollTrigger !== 'undefined';
+
+  // Mark text elements without changing their readable source text.
+  document.querySelectorAll('.eyebrow, .page-hero__en, .hero__label, .breadcrumb').forEach((el) => {
+    el.classList.add('text-line-reveal');
+  });
+  document.querySelectorAll('.business-service h2, .portal-card h3, .workstyle-card h3, .partner-type h3, .process-card strong, .home-job-link strong, .job-card__head h3').forEach((el) => {
+    el.classList.add('text-word-rise');
+  });
+  document.querySelectorAll('.lead').forEach((el) => el.classList.add('text-highlight-sweep'));
+
+  if (reduce || !gsapReady) {
+    document.documentElement.classList.add('text-motion-ready');
+    return;
+  }
+
+  window.gsap.registerPlugin(window.ScrollTrigger);
+
+  // Slim labels wipe in from left with a restrained tracking settle.
+  document.querySelectorAll('.text-line-reveal').forEach((el) => {
+    if (el.dataset.v22Motion) return;
+    el.dataset.v22Motion = '1';
+    gsap.fromTo(el,
+      { clipPath: 'inset(0 100% 0 0)', x: -18, opacity: .15, letterSpacing: '.28em' },
+      { clipPath: 'inset(0 0% 0 0)', x: 0, opacity: 1, letterSpacing: '', duration: .9, ease: 'power4.out',
+        scrollTrigger: { trigger: el, start: 'top 93%', once: true } }
+    );
+  });
+
+  // Compact headings rise word-by-word. Japanese is grouped by punctuation/phrases,
+  // avoiding one-character gimmicks and preserving natural wrapping.
+  document.querySelectorAll('.text-word-rise').forEach((el) => {
+    if (el.dataset.v22Split) return;
+    el.dataset.v22Split = '1';
+    const original = el.textContent.trim();
+    el.setAttribute('aria-label', original);
+    const parts = original.split(/([、。・／\/\s]+)/).filter(Boolean);
+    el.textContent = '';
+    parts.forEach((part) => {
+      const span = document.createElement('span');
+      span.className = /[、。・／\/\s]+/.test(part) ? 'text-word-rise__space' : 'text-word-rise__word';
+      span.setAttribute('aria-hidden', 'true');
+      span.textContent = part;
+      el.appendChild(span);
+    });
+    const words = el.querySelectorAll('.text-word-rise__word');
+    gsap.fromTo(words,
+      { yPercent: 115, opacity: 0, rotate: 1.5 },
+      { yPercent: 0, opacity: 1, rotate: 0, duration: .72, stagger: .075, ease: 'power4.out',
+        scrollTrigger: { trigger: el, start: 'top 91%', once: true } }
+    );
+  });
+
+  // A soft blue reading highlight passes once behind important lead copy.
+  document.querySelectorAll('.text-highlight-sweep').forEach((el) => {
+    if (el.dataset.v22Highlight) return;
+    el.dataset.v22Highlight = '1';
+    gsap.fromTo(el,
+      { '--text-highlight-progress': '0%' },
+      { '--text-highlight-progress': '100%', duration: 1.15, ease: 'power2.inOut',
+        scrollTrigger: { trigger: el, start: 'top 88%', once: true } }
+    );
+  });
+
+  // Hero outline gets a slow, premium light pass instead of an aggressive loop.
+  document.querySelectorAll('.hero__title .outline').forEach((el) => {
+    gsap.fromTo(el, { backgroundPosition: '180% 50%' }, { backgroundPosition: '-80% 50%', duration: 2.2, delay: .55, ease: 'power2.inOut' });
+  });
+
+  document.documentElement.classList.add('text-motion-ready');
+  window.ScrollTrigger.refresh();
 })();

@@ -2164,3 +2164,78 @@ img, svg, video, canvas { max-width: 100%; }
     animation-duration: 36s;
   }
 }
+
+/* =========================================================
+   v22 — responsive text-motion system
+   ========================================================= */
+.text-line-reveal { will-change: clip-path, transform, opacity; }
+
+.text-word-rise { overflow: hidden; }
+.text-word-rise__word,
+.text-word-rise__space { display: inline-block; }
+.text-word-rise__space { white-space: pre-wrap; }
+.text-word-rise__word { will-change: transform, opacity; }
+
+.text-highlight-sweep {
+  --text-highlight-progress: 0%;
+  position: relative;
+  isolation: isolate;
+  background-image: linear-gradient(90deg,
+    rgba(7,93,232,.13) 0,
+    rgba(7,93,232,.13) var(--text-highlight-progress),
+    transparent var(--text-highlight-progress),
+    transparent 100%);
+  background-repeat: no-repeat;
+  background-size: 100% .44em;
+  background-position: 0 88%;
+  transition: background-size .35s ease;
+}
+
+.hero__title .outline {
+  background-image: linear-gradient(100deg, transparent 34%, rgba(255,255,255,.9) 49%, transparent 64%);
+  background-size: 260% 100%;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.entry-button span,
+.header-entry span,
+.text-link,
+.portal-card__link {
+  transition: letter-spacing .35s var(--ease), transform .35s var(--ease);
+}
+.entry-button:hover span,
+.header-entry:hover span,
+.text-link:hover,
+.portal-card:hover .portal-card__link { letter-spacing: .14em; }
+
+/* Typewriter is intentionally enabled on mobile as well. Each character remains
+   inline so Japanese wraps naturally without causing horizontal overflow. */
+.typewriter-line { min-height: 1em; }
+.typewriter-char { display: inline; }
+
+@media (max-width: 760px) {
+  [data-typewriter-group] .typewriter-line {
+    overflow-wrap: break-word;
+    word-break: normal;
+    line-break: strict;
+  }
+  [data-typewriter-group].typewriter-ready .typewriter-char { opacity: 0; }
+  [data-typewriter-group].typewriter-ready .typewriter-char.is-typed { opacity: 1; }
+  [data-typewriter-group].is-typing .typewriter-line.is-current::after {
+    width: 1.5px;
+    margin-left: 2px;
+  }
+  .text-highlight-sweep { background-size: 100% .34em; }
+  .text-word-rise { overflow: clip; }
+  .entry-button:hover span,
+  .header-entry:hover span,
+  .text-link:hover { letter-spacing: inherit; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .text-line-reveal,
+  .text-word-rise__word { clip-path: none !important; transform: none !important; opacity: 1 !important; }
+  .text-highlight-sweep { --text-highlight-progress: 0% !important; background-image: none !important; }
+}
