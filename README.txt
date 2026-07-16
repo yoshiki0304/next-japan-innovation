@@ -3,6 +3,7 @@
 ■ ページ構成
 index.html      TOP
 company.html    企業情報
+column.html     コラム（Blogger連携）
 business.html   事業紹介
 contact.html    お問合せ
 jobs.html       採用情報
@@ -38,3 +39,16 @@ v7改善内容
 - 「事業紹介」を「企業紹介」に変更
 - 提供サービスの4番目に「ネットワークカメラ」を追加
 - 以降のサービス番号を繰り下げ
+
+
+【v9 コラム自動連携】
+完全無料のBloggerを記事投稿画面として使用します。
+1. https://www.blogger.com/ でGoogleアカウントにログイン
+2. 「新しいブログ」を作成し、公開範囲を一般公開に設定
+3. 記事作成画面でタイトル、本文、写真を入力して公開
+4. assets/js/column-config.js を開く
+5. blogUrl の https://YOUR-BLOG-NAME.blogspot.com を、ご自身のBlogger URLへ変更
+6. GitHubへ上書きアップロード
+
+以後はBloggerで記事を公開するだけで、column.htmlへ自動反映されます。
+Blogger本体、記事投稿、写真掲載、JSONフィードの利用に追加料金はかかりません。
