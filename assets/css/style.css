@@ -1619,3 +1619,42 @@ img, svg, video, canvas { max-width: 100%; }
   .hero__bottom .heading-phrases { font-size: clamp(1.02rem, 5.4vw, 1.25rem) !important; }
   .circle-link { width: 82px; min-width: 82px; }
 }
+
+
+/* =========================================================
+   LIGHTER COLOR THEME — v13
+   Revert by replacing this file with the v12 backup version.
+   ========================================================= */
+:root {
+  --navy: #164d83;
+  --navy-deep: #0a2d52;
+  --blue: #2678ee;
+  --blue-soft: #9fc7ff;
+  --ice: #edf6ff;
+  --paper: #fafaf7;
+  --ink: #10243a;
+  --muted: #60758b;
+  --line: rgba(16, 36, 58, .13);
+  --line-light: rgba(255,255,255,.28);
+}
+.section--dark,.mobile-menu,.page-loader,.hero,.page-hero,.site-footer { background-color: var(--navy-deep); }
+.hero__media img { filter: grayscale(.35) saturate(.92) brightness(1.08) contrast(1.02); }
+.hero__shade { background: linear-gradient(90deg, rgba(10,45,82,.78) 0%, rgba(10,45,82,.40) 56%, rgba(10,45,82,.16) 100%), linear-gradient(0deg, rgba(10,45,82,.58), transparent 62%); }
+.page-hero__media img { filter: grayscale(.30) saturate(.92) brightness(1.08) contrast(1.02); }
+.page-hero__shade { background: linear-gradient(90deg, rgba(10,45,82,.80), rgba(10,45,82,.38) 65%, rgba(10,45,82,.12)), linear-gradient(0deg, rgba(10,45,82,.55), transparent 68%); }
+.portal-card__image img { filter: grayscale(.30) saturate(.90) brightness(.72) contrast(1.02); }
+.portal-card::after { background: linear-gradient(180deg, rgba(10,45,82,.10), rgba(10,45,82,.68)); }
+.portal-card:hover .portal-card__image img { filter: grayscale(.10) saturate(1) brightness(.80); }
+.message-preview__media img { filter: grayscale(.30) saturate(.90) brightness(1.04); }
+.hero__grid,.page-hero__grid { opacity: .14; }
+.hero__orbit { border-color: rgba(159,199,255,.42); }
+.section-index { color: rgba(22,77,131,.05); }
+.site-header.is-scrolled,body.inner-page .site-header { background: rgba(250,250,247,.95); border-bottom-color: rgba(22,77,131,.12); }
+.header-entry,.ticker,.section--blue { background: var(--blue); }
+.cursor-ring { border-color: rgba(38,120,238,.55); }
+.cursor-ring.is-hover { background: rgba(38,120,238,.10); }
+.section--dark .home-jobs__copy,.section--dark .portal-card p,.site-footer,.mobile-menu { color: #f5f9ff; }
+@media (max-width: 767px) {
+  .hero__shade { background: linear-gradient(180deg, rgba(10,45,82,.24) 0%, rgba(10,45,82,.48) 45%, rgba(10,45,82,.76) 100%); }
+  .page-hero__shade { background: linear-gradient(180deg, rgba(10,45,82,.30), rgba(10,45,82,.68)); }
+}
