@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Disallow: /PHPMailer/
+Disallow: /_next/
+Disallow: /_not-found/
+Disallow: /new-site/
+Disallow: /nextji-corporate-site-v33-contact-spacing/
+Disallow: /nextji-corporate-site-v34-windows-select-fix%20(1)/
+Disallow: /nextji-contact-fix-v36-flat/
+Disallow: /nextji-contact-fix-v36-flat-1/
+Disallow: /nextji-contact-fix-v36-flat-2/
+Disallow: /nextji-contact-xserver-php-mail/
+Sitemap: https://next-ji.jp/sitemap.xml
