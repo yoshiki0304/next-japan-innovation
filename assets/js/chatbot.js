@@ -134,10 +134,10 @@
       .back-to-top{right:252px!important}
       @media (max-width:640px){
         .nji-chatbot{right:12px!important;bottom:12px!important}
-        .nji-chatbot__launcher{width:65px!important;height:65px!important}
-        .nji-chatbot__launcher-character{filter:drop-shadow(0 7px 10px rgba(0,0,0,.22))}
-        .nji-chatbot__panel{bottom:87px!important}
-        .back-to-top{right:93px!important}
+        .nji-chatbot__launcher{width:98px!important;height:98px!important}
+        .nji-chatbot__launcher-character{filter:drop-shadow(0 8px 12px rgba(0,0,0,.22))}
+        .nji-chatbot__panel{bottom:120px!important}
+        .back-to-top{right:126px!important}
       }
     `;
     document.head.appendChild(style);
