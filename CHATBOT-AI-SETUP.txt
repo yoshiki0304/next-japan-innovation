@@ -1,0 +1,47 @@
+Next Japan Innovation AIチャットボット設定
+
+実装済みファイル
+- contact.html
+- assets/js/chatbot.js
+- chat-api.php
+
+【重要】OpenAI APIキーはGitHubへ絶対にコミットしないでください。
+このリポジトリは公開設定です。
+
+推奨設定
+サーバー側の環境変数 OPENAI_API_KEY にAPIキーを設定してください。
+chat-api.php は自動的にこの環境変数を読み込みます。
+
+環境変数を設定できないレンタルサーバーの場合
+公開ディレクトリの1階層上に次のファイルを作成できます。
+ファイル名: nextji-openai-key.php
+
+内容:
+<?php
+return 'ここにOpenAI APIキー';
+
+このファイルは公開ディレクトリ外に置き、GitHubへアップロードしないでください。
+
+どうしても同一ディレクトリに置く場合
+ファイル名: chat-api-config.php
+内容:
+<?php
+return 'ここにOpenAI APIキー';
+
+.gitignoreには chat-api-config.php を登録済みです。ただし公開Web領域への秘密情報配置は、環境変数または公開ディレクトリ外の設定より推奨度が下がります。
+
+AIモデル
+- gpt-5.6-luna
+- Responses API
+- store=false
+
+安全対策
+- APIキーはブラウザへ送信しない
+- 同一オリジンのみ許可
+- 1メッセージ800文字まで
+- IP単位の簡易レート制限
+- 会話履歴は直近のみ送信
+- API障害・未設定時は従来の案内型チャットへ自動フォールバック
+- 料金、納期、求人条件など未確定情報を推測しないよう指示済み
+
+APIキー設定後、contact.htmlの右下チャットを開き、自由入力で「ホームページ制作について相談したい」などと入力してAI回答を確認してください。
