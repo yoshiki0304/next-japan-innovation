@@ -1,5 +1,6 @@
-# Never commit OpenAI API secrets
+# Never commit chatbot API secrets
 chat-api-config.php
+nextji-gemini-key.php
 nextji-openai-key.php
 .env
 .env.*
