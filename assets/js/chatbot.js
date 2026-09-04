@@ -22,7 +22,7 @@
       img.alt = 'chatBOTくん';
       launcher.prepend(img);
     }
-    img.src = 'assets/images/chatbot-kun-transparent.webp?v=1';
+    img.src = 'assets/images/chatbot-kun.webp?v=2-transparent';
 
     const oldStyle = document.querySelector('style[data-nji-chatbot-character-style]');
     if (oldStyle) oldStyle.remove();
