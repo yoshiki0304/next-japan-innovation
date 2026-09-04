@@ -8,15 +8,21 @@
     .nji-chatbot{--nji-bg:#07111f;--nji-panel:#0b1728;--nji-line:rgba(255,255,255,.12);--nji-text:#f7f9fc;--nji-muted:#9eacbd;--nji-accent:#4b8cff;position:fixed;right:22px;bottom:22px;z-index:10000;font-family:inherit;color:var(--nji-text)}
     .nji-chatbot *{box-sizing:border-box}
     .back-to-top{right:104px!important}
+    .home-page .back-to-top{right:120px!important}
     .nji-chatbot__launcher{position:relative;width:64px;height:64px;border:1px solid rgba(255,255,255,.2);border-radius:50%;background:linear-gradient(145deg,#17345b,#07111f);color:#fff;display:grid;place-items:center;cursor:pointer;box-shadow:0 16px 42px rgba(0,0,0,.34);transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease}
     .nji-chatbot__launcher:hover{transform:translateY(-3px);box-shadow:0 20px 48px rgba(0,0,0,.42);border-color:rgba(111,163,255,.7)}
     .nji-chatbot__launcher svg{width:27px;height:27px;fill:none;stroke:currentColor;stroke-width:1.8}
+    .home-page .nji-chatbot__launcher{width:78px;height:78px}
+    .home-page .nji-chatbot__launcher svg{width:33px;height:33px}
     .nji-chatbot__launcher-label{position:absolute;right:74px;white-space:nowrap;padding:9px 13px;border-radius:999px;background:#fff;color:#07111f;font-size:12px;font-weight:700;letter-spacing:.04em;box-shadow:0 10px 26px rgba(0,0,0,.16);opacity:0;transform:translateX(8px);pointer-events:none;transition:.25s ease}
+    .home-page .nji-chatbot__launcher-label{right:90px;padding:10px 14px;font-size:13px}
     .nji-chatbot.is-nudged .nji-chatbot__launcher-label{opacity:1;transform:none}
     .nji-chatbot__panel{position:absolute;right:0;bottom:78px;width:min(390px,calc(100vw - 28px));height:min(620px,calc(100vh - 118px));background:linear-gradient(180deg,#0d1d31 0%,#07111f 100%);border:1px solid rgba(255,255,255,.14);border-radius:22px;overflow:hidden;box-shadow:0 26px 70px rgba(0,0,0,.46);display:flex;flex-direction:column;opacity:0;visibility:hidden;transform:translateY(14px) scale(.985);transform-origin:bottom right;transition:opacity .2s ease,transform .2s ease,visibility .2s ease}
+    .home-page .nji-chatbot__panel{bottom:92px}
     .nji-chatbot.is-open .nji-chatbot__panel{opacity:1;visibility:visible;transform:none}
     .nji-chatbot__head{display:flex;align-items:center;gap:12px;padding:18px 18px 15px;border-bottom:1px solid var(--nji-line);background:rgba(255,255,255,.025)}
-    .nji-chatbot__mark{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:#fff;color:#07111f;font-weight:900;font-size:11px;letter-spacing:.08em}
+    .nji-chatbot__mark{width:50px;height:50px;flex:0 0 50px;border-radius:12px;display:grid;place-items:center;background:#fff;overflow:hidden;padding:4px}
+    .nji-chatbot__mark img{display:block;width:100%;height:100%;object-fit:contain}
     .nji-chatbot__head-copy{min-width:0;flex:1}
     .nji-chatbot__eyebrow{margin:0 0 3px;color:#7faeff;font-size:10px;font-weight:800;letter-spacing:.14em}
     .nji-chatbot__title{margin:0;font-size:15px;font-weight:800;letter-spacing:.02em}
@@ -46,7 +52,7 @@
     .nji-chatbot__send{width:44px;height:44px;border:0;border-radius:12px;background:#fff;color:#07111f;display:grid;place-items:center;cursor:pointer;font-weight:900}
     .nji-chatbot__send:disabled{opacity:.55;cursor:wait}
     .nji-chatbot__foot{padding:0 14px 11px;text-align:center;color:#728196;font-size:9px;background:rgba(2,8,16,.52)}
-    @media (max-width:640px){.nji-chatbot{right:14px;bottom:14px}.back-to-top{right:82px!important}.nji-chatbot__launcher{width:58px;height:58px}.nji-chatbot__launcher-label{display:none}.nji-chatbot__panel{position:fixed;left:10px;right:10px;bottom:82px;width:auto;height:min(620px,calc(100dvh - 100px));border-radius:18px;transform-origin:bottom center}.nji-chatbot__head{padding:15px}.nji-chatbot__body{padding:15px}.nji-chatbot__bubble{max-width:92%}}
+    @media (max-width:640px){.nji-chatbot{right:14px;bottom:14px}.back-to-top{right:82px!important}.home-page .back-to-top{right:94px!important}.nji-chatbot__launcher{width:58px;height:58px}.home-page .nji-chatbot__launcher{width:66px;height:66px}.home-page .nji-chatbot__launcher svg{width:29px;height:29px}.nji-chatbot__launcher-label{display:none}.nji-chatbot__panel{position:fixed;left:10px;right:10px;bottom:82px;width:auto;height:min(620px,calc(100dvh - 100px));border-radius:18px;transform-origin:bottom center}.home-page .nji-chatbot__panel{bottom:90px}.nji-chatbot__head{padding:15px}.nji-chatbot__mark{width:46px;height:46px;flex-basis:46px}.nji-chatbot__body{padding:15px}.nji-chatbot__bubble{max-width:92%}}
     @media (prefers-reduced-motion:reduce){.nji-chatbot__launcher,.nji-chatbot__panel,.nji-chatbot__launcher-label,.nji-chatbot__choice{transition:none!important}.nji-chatbot__body{scroll-behavior:auto}.nji-chatbot__typing i{animation:none}}
   `;
   document.head.appendChild(style);
@@ -55,12 +61,12 @@
   root.className = 'nji-chatbot';
   root.setAttribute('data-nji-chatbot', '');
   root.innerHTML = `
-    <section class="nji-chatbot__panel" role="dialog" aria-modal="false" aria-label="Next Japan Innovation お問い合わせサポート" aria-hidden="true">
+    <section class="nji-chatbot__panel" role="dialog" aria-modal="false" aria-label="NJI・chatBOTくん" aria-hidden="true">
       <header class="nji-chatbot__head">
-        <div class="nji-chatbot__mark">NJI</div>
+        <div class="nji-chatbot__mark"><img src="assets/images/company-logo.png" alt="Next Japan Innovation" /></div>
         <div class="nji-chatbot__head-copy">
           <p class="nji-chatbot__eyebrow">AI CONTACT ASSIST</p>
-          <p class="nji-chatbot__title">お問い合わせサポート</p>
+          <p class="nji-chatbot__title">NJI・chatBOTくん</p>
           <div class="nji-chatbot__status">AI自動案内</div>
         </div>
         <button class="nji-chatbot__close" type="button" aria-label="チャットを閉じる">×</button>
@@ -72,8 +78,8 @@
       </form>
       <div class="nji-chatbot__foot">AIによる自動案内です。正式なお見積り・個別条件は担当者が確認します。</div>
     </section>
-    <button class="nji-chatbot__launcher" type="button" aria-label="お問い合わせチャットを開く" aria-expanded="false">
-      <span class="nji-chatbot__launcher-label">AIに相談する</span>
+    <button class="nji-chatbot__launcher" type="button" aria-label="NJI・chatBOTくんを開く" aria-expanded="false">
+      <span class="nji-chatbot__launcher-label">NJI・chatBOTくんに相談</span>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 15a4 4 0 0 1-4 4H8l-5 3 1.5-4.5A7 7 0 0 1 4 15V8a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4z"/><path d="M8 10h8M8 14h5"/></svg>
     </button>
   `;
@@ -393,7 +399,7 @@
     answerFreeText(value);
   });
 
-  addBubble('こんにちは。Next Japan InnovationのAIお問い合わせサポートです。\nメニューを選ぶか、下の入力欄から自由に質問してください。');
+  addBubble('こんにちは。Next Japan InnovationのNJI・chatBOTくんです。\nメニューを選ぶか、下の入力欄から自由に質問してください。');
   showMainMenu();
 
   const params = new URLSearchParams(window.location.search);
