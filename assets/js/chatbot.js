@@ -52,12 +52,12 @@
     const style = document.createElement('style');
     style.setAttribute('data-nji-chatbot-character-style', '');
     style.textContent = `
-      .nji-chatbot{--nji-bg:#fff!important;--nji-panel:#fff!important;--nji-line:#e3e8ef!important;--nji-text:#13243b!important;--nji-muted:#6d7b8d!important;--nji-accent:#245fae!important;color:#13243b!important;overflow:visible!important;right:58px!important}
+      .nji-chatbot{--nji-bg:#fff!important;--nji-panel:#fff!important;--nji-line:#e3e8ef!important;--nji-text:#13243b!important;--nji-muted:#6d7b8d!important;--nji-accent:#245fae!important;color:#13243b!important;overflow:visible!important;right:22px!important;bottom:22px!important}
       .nji-chatbot__launcher{width:207px!important;height:207px!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;overflow:visible!important;transform:none!important}
       .nji-chatbot__launcher:hover{transform:none!important}
       .nji-chatbot__launcher-label{z-index:40;right:222px!important}
-      .nji-chatbot__mascot-stage{position:absolute;left:-24px;right:-44px;top:-26px;bottom:-24px;z-index:2;display:block;overflow:visible!important;pointer-events:none;filter:drop-shadow(0 14px 18px rgba(0,0,0,.22));contain:none!important;clip-path:none!important}
-      .nji-chatbot__part{position:absolute;left:24px;right:44px;top:26px;bottom:24px;width:auto;height:auto;max-width:none!important;max-height:none!important;object-fit:contain;object-position:center;overflow:visible!important;pointer-events:none;user-select:none;-webkit-user-drag:none;will-change:transform,opacity}
+      .nji-chatbot__mascot-stage{position:absolute;inset:0;z-index:2;display:block;overflow:visible!important;pointer-events:none;filter:drop-shadow(0 14px 18px rgba(0,0,0,.22));contain:none!important;clip-path:none!important}
+      .nji-chatbot__part{position:absolute;inset:0;width:100%;height:100%;max-width:none!important;max-height:none!important;object-fit:contain;object-position:center;overflow:visible!important;pointer-events:none;user-select:none;-webkit-user-drag:none;will-change:transform,opacity}
       .nji-chatbot__part--footLeft,.nji-chatbot__part--footRight{z-index:1}
       .nji-chatbot__part--antenna{z-index:2;transform-origin:53% 27%}
       .nji-chatbot__part--body{z-index:3;transform-origin:50% 62%}
@@ -76,7 +76,7 @@
       .nji-chatbot__close{background:#f1f4f8!important;color:#13243b!important}.nji-chatbot__body{background:#fff!important;color:#13243b!important}.nji-chatbot__bubble{background:#f2f5f9!important;border-color:#e1e7ef!important;color:#1b2d45!important}.nji-chatbot__row.is-user .nji-chatbot__bubble{background:#17365f!important;border-color:#17365f!important;color:#fff!important}
       .nji-chatbot__choice{background:#fff!important;border-color:#bfd0e6!important;color:#18314f!important}.nji-chatbot__choice small{color:#6f7f92!important}.nji-chatbot__action{background:#f2f5f9!important;border-color:#dce4ee!important;color:#17365f!important}.nji-chatbot__action.is-primary{background:#17365f!important;border-color:#17365f!important;color:#fff!important}
       .nji-chatbot__inputbar{background:#fff!important;border-top:1px solid #e3e8ef!important}.nji-chatbot__input{background:#fff!important;border-color:#cbd6e4!important;color:#13243b!important}.nji-chatbot__send{background:#17365f!important;color:#fff!important}.nji-chatbot__foot{background:#fff!important;color:#8491a1!important;border-radius:0 0 22px 22px}.back-to-top{right:252px!important}
-      @media(max-width:640px){.nji-chatbot{right:36px!important;bottom:12px!important;overflow:visible!important}.nji-chatbot__launcher{width:98px!important;height:98px!important;overflow:visible!important}.nji-chatbot__mascot-stage{left:-14px;right:-24px;top:-18px;bottom:-14px;overflow:visible!important;filter:drop-shadow(0 8px 12px rgba(0,0,0,.2))}.nji-chatbot__part{left:14px;right:24px;top:18px;bottom:14px}.nji-chatbot__panel{bottom:120px!important;border-radius:18px!important}.nji-chatbot__panel::after{right:38px;bottom:-12px;width:24px;height:24px}.nji-chatbot__head{border-radius:18px 18px 0 0}.nji-chatbot__foot{border-radius:0 0 18px 18px}.back-to-top{right:126px!important}}
+      @media(max-width:640px){.nji-chatbot{right:14px!important;bottom:14px!important;overflow:visible!important}.nji-chatbot__launcher{width:98px!important;height:98px!important;overflow:visible!important}.nji-chatbot__mascot-stage{inset:0;overflow:visible!important;filter:drop-shadow(0 8px 12px rgba(0,0,0,.2))}.nji-chatbot__part{inset:0;width:100%;height:100%}.nji-chatbot__panel{bottom:120px!important;border-radius:18px!important}.nji-chatbot__panel::after{right:38px;bottom:-12px;width:24px;height:24px}.nji-chatbot__head{border-radius:18px 18px 0 0}.nji-chatbot__foot{border-radius:0 0 18px 18px}.back-to-top{right:126px!important}}
     `;
     document.head.appendChild(style);
 
