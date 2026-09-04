@@ -12,7 +12,7 @@
   core.addEventListener('load', () => {
     if (document.querySelector('script[data-nji-chatbot-mascot]')) return;
     const mascot = document.createElement('script');
-    mascot.src = new URL('chatbot-mascot.js?v=1-padded-896', self.src).href;
+    mascot.src = new URL('chatbot-mascot.js?v=2-static-baseline', self.src).href;
     mascot.async = false;
     mascot.setAttribute('data-nji-chatbot-mascot', '');
     document.head.appendChild(mascot);
