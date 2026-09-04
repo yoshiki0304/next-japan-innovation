@@ -9,6 +9,75 @@
   core.async = false;
   core.setAttribute('data-nji-chatbot-core', '');
 
+  const removeConnectedWhiteBackground = (img) => {
+    try {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      if (!ctx) return;
+
+      const w = img.naturalWidth;
+      const h = img.naturalHeight;
+      if (!w || !h) return;
+
+      canvas.width = w;
+      canvas.height = h;
+      ctx.drawImage(img, 0, 0, w, h);
+
+      const imageData = ctx.getImageData(0, 0, w, h);
+      const data = imageData.data;
+      const visited = new Uint8Array(w * h);
+      const queue = new Int32Array(w * h);
+      let head = 0;
+      let tail = 0;
+
+      const isBackground = (p) => {
+        const i = p * 4;
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        return min >= 224 && (max - min) <= 24;
+      };
+
+      const push = (p) => {
+        if (p < 0 || p >= w * h || visited[p] || !isBackground(p)) return;
+        visited[p] = 1;
+        queue[tail++] = p;
+      };
+
+      for (let x = 0; x < w; x++) {
+        push(x);
+        push((h - 1) * w + x);
+      }
+      for (let y = 0; y < h; y++) {
+        push(y * w);
+        push(y * w + w - 1);
+      }
+
+      while (head < tail) {
+        const p = queue[head++];
+        const x = p % w;
+        const y = (p / w) | 0;
+        if (x > 0) push(p - 1);
+        if (x + 1 < w) push(p + 1);
+        if (y > 0) push(p - w);
+        if (y + 1 < h) push(p + w);
+      }
+
+      for (let p = 0; p < visited.length; p++) {
+        if (!visited[p]) continue;
+        data[p * 4 + 3] = 0;
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+      img.src = canvas.toDataURL('image/png');
+      img.dataset.backgroundRemoved = 'true';
+    } catch (error) {
+      console.warn('chatBOT mascot background removal skipped:', error);
+    }
+  };
+
   core.addEventListener('load', () => {
     const launcher = document.querySelector('.nji-chatbot__launcher');
     if (!launcher) return;
@@ -19,10 +88,16 @@
     if (!img) {
       img = document.createElement('img');
       img.className = 'nji-chatbot__launcher-character';
-      img.alt = 'chatBOTくん';
+      img.alt = '';
+      img.setAttribute('aria-hidden', 'true');
       launcher.prepend(img);
     }
-    img.src = 'assets/images/chatbot-kun.webp?v=2-transparent';
+
+    img.addEventListener('load', () => {
+      if (img.dataset.backgroundRemoved === 'true') return;
+      removeConnectedWhiteBackground(img);
+    }, { once: false });
+    img.src = 'assets/images/chatbot-kun.webp?v=4-cutout';
 
     const oldStyle = document.querySelector('style[data-nji-chatbot-character-style]');
     if (oldStyle) oldStyle.remove();
