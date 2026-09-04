@@ -82,7 +82,8 @@
 
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
     let state = 'idle';
-    let timer = 0;
+    let blinkTimer = 0;
+    let specialTimer = 0;
     const running = new Set();
     let breathing = [];
 
@@ -125,14 +126,46 @@
       parts.eyeHalfR.style.transform='translateX(28.4%)';
     };
 
-    const schedule = () => {
-      if (timer) clearTimeout(timer);
-      if (reduced.matches || state !== 'idle' || document.hidden || root?.classList.contains('is-open')) return;
-      timer=setTimeout(()=>playRandom(),6500+Math.random()*7500);
+    const clearTimers = () => {
+      if (blinkTimer) { clearTimeout(blinkTimer); blinkTimer = 0; }
+      if (specialTimer) { clearTimeout(specialTimer); specialTimer = 0; }
+    };
+
+    const canIdleAnimate = () => !reduced.matches && !document.hidden && !root?.classList.contains('is-open');
+
+    const scheduleBlink = () => {
+      if (blinkTimer || !canIdleAnimate()) return;
+      blinkTimer = setTimeout(() => {
+        blinkTimer = 0;
+        if (state === 'idle') blink();
+        else scheduleBlink();
+      }, 2000 + Math.random() * 2000);
+    };
+
+    const scheduleSpecial = () => {
+      if (specialTimer || !canIdleAnimate()) return;
+      specialTimer = setTimeout(() => {
+        specialTimer = 0;
+        if (state !== 'idle') {
+          specialTimer = setTimeout(() => {
+            specialTimer = 0;
+            scheduleSpecial();
+          }, 900 + Math.random() * 900);
+          return;
+        }
+        const specials = [wave, yawn, sleepMotion];
+        const fn = specials[Math.floor(Math.random() * specials.length)];
+        fn();
+      }, 5000 + Math.random() * 3000);
+    };
+
+    const scheduleAll = () => {
+      scheduleBlink();
+      scheduleSpecial();
     };
 
     const enterIdle = () => {
-      state='idle'; hardReset(); startBreathing(); schedule();
+      state='idle'; hardReset(); startBreathing(); scheduleAll();
     };
 
     const blink = async () => {
@@ -244,23 +277,16 @@
       enterIdle();
     };
 
-    const actions=[blink,blink,wave,yawn,sleepMotion];
-    const playRandom=()=>{
-      if(state!=='idle'||document.hidden||root?.classList.contains('is-open')||reduced.matches){schedule();return;}
-      const fn=actions[Math.floor(Math.random()*actions.length)];
-      fn();
-    };
-
     launcher.addEventListener('click',()=>{
-      if(timer){clearTimeout(timer);timer=0;}
+      clearTimers();
       hardReset(); state='idle';
     });
     document.addEventListener('visibilitychange',()=>{
-      if(document.hidden){if(timer){clearTimeout(timer);timer=0;} hardReset(); state='idle';}
+      if(document.hidden){clearTimers(); hardReset(); state='idle';}
       else enterIdle();
     });
     new MutationObserver(()=>{
-      if(root?.classList.contains('is-open')){if(timer){clearTimeout(timer);timer=0;} hardReset(); state='idle';}
+      if(root?.classList.contains('is-open')){clearTimers(); hardReset(); state='idle';}
       else enterIdle();
     }).observe(root,{attributes:true,attributeFilter:['class']});
 
