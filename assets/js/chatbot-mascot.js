@@ -12,9 +12,14 @@
     launcher.querySelector('svg')?.remove();
     launcher.querySelectorAll('.nji-chatbot__mascot-stage,.nji-chatbot__launcher-character,.nji-chatbot__idle-fx,.nji-chatbot__part').forEach((el) => el.remove());
 
+    // Position wrapper: fixed layout only. Never animated.
     const stage = document.createElement('span');
     stage.className = 'nji-chatbot__mascot-stage';
     stage.setAttribute('aria-hidden', 'true');
+
+    // Animation wrapper: breathing transform only.
+    const motion = document.createElement('span');
+    motion.className = 'nji-chatbot__mascot-motion';
 
     const img = document.createElement('img');
     img.className = 'nji-chatbot__static-mascot';
@@ -23,7 +28,8 @@
     img.decoding = 'async';
     img.draggable = false;
 
-    stage.appendChild(img);
+    motion.appendChild(img);
+    stage.appendChild(motion);
     launcher.prepend(stage);
 
     document.querySelector('style[data-nji-chatbot-character-style]')?.remove();
@@ -44,6 +50,11 @@
       .nji-chatbot__mascot-stage{
         position:absolute!important;inset:0!important;width:207px!important;height:207px!important;
         overflow:visible!important;pointer-events:none!important;z-index:2!important;
+        transform:none!important;
+      }
+      .nji-chatbot__mascot-motion{
+        display:block!important;position:absolute!important;inset:0!important;width:207px!important;height:207px!important;
+        overflow:visible!important;transform:none;transform-origin:50% 78%;will-change:transform;
       }
       .nji-chatbot__static-mascot{
         display:block!important;position:absolute!important;inset:0!important;width:207px!important;height:207px!important;
@@ -60,7 +71,7 @@
       .nji-chatbot__inputbar{background:#fff!important;border-top:1px solid #e3e8ef!important}.nji-chatbot__input{background:#fff!important;border-color:#cbd6e4!important;color:#13243b!important}.nji-chatbot__send{background:#17365f!important;color:#fff!important}.nji-chatbot__foot{background:#fff!important;color:#8491a1!important;border-radius:0 0 22px 22px}.back-to-top{right:252px!important}
       @media(max-width:640px){
         .nji-chatbot{right:14px!important;bottom:14px!important;overflow:visible!important}
-        .nji-chatbot__launcher,.nji-chatbot__mascot-stage{width:98px!important;height:98px!important}
+        .nji-chatbot__launcher,.nji-chatbot__mascot-stage,.nji-chatbot__mascot-motion{width:98px!important;height:98px!important}
         .nji-chatbot__static-mascot{width:98px!important;height:98px!important;filter:drop-shadow(0 8px 12px rgba(0,0,0,.2))}
         .nji-chatbot__panel{bottom:120px!important;border-radius:18px!important}.nji-chatbot__panel::after{right:38px;bottom:-12px;width:24px;height:24px}
         .nji-chatbot__head{border-radius:18px 18px 0 0}.nji-chatbot__foot{border-radius:0 0 18px 18px}.back-to-top{right:126px!important}
@@ -68,8 +79,51 @@
     `;
     document.head.appendChild(style);
 
-    // Static baseline only. No breathing, blink, wave, sleep or timers here.
-    if (root) root.dataset.mascotMode = 'static-baseline';
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let breath = null;
+
+    const stopBreathing = () => {
+      if (breath) {
+        breath.cancel();
+        breath = null;
+      }
+      motion.style.transform = 'none';
+    };
+
+    const canBreathe = () => !reduced.matches && !document.hidden && !root?.classList.contains('is-open');
+
+    const startBreathing = () => {
+      stopBreathing();
+      if (!canBreathe()) return;
+
+      breath = motion.animate([
+        { transform:'translateY(0) scaleX(1) scaleY(1)', offset:0 },
+        { transform:'translateY(0.4px) scaleX(0.999) scaleY(0.998)', offset:0.22 },
+        { transform:'translateY(-0.8px) scaleX(1.003) scaleY(1.007)', offset:0.52 },
+        { transform:'translateY(-0.3px) scaleX(1.001) scaleY(1.003)', offset:0.76 },
+        { transform:'translateY(0) scaleX(1) scaleY(1)', offset:1 }
+      ], {
+        duration: 3600,
+        iterations: Infinity,
+        easing: 'cubic-bezier(.45,0,.55,1)'
+      });
+    };
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stopBreathing();
+      else startBreathing();
+    });
+
+    if (root) {
+      new MutationObserver(() => {
+        if (root.classList.contains('is-open')) stopBreathing();
+        else startBreathing();
+      }).observe(root, { attributes:true, attributeFilter:['class'] });
+      root.dataset.mascotMode = 'breathing-only';
+    }
+
+    reduced.addEventListener?.('change', () => startBreathing());
+    startBreathing();
   };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once:true });
