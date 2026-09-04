@@ -20,19 +20,31 @@
     const stage = document.createElement('span');
     stage.className = 'nji-chatbot__mascot-stage';
     stage.setAttribute('aria-hidden', 'true');
-    stage.innerHTML = `
-      <img class="nji-chatbot__mascot-base" src="assets/images/chatbot-kun.webp?v=10-stable-parts" alt="" />
-      <img class="nji-chatbot__mascot-overlay nji-chatbot__body-overlay" src="assets/images/chatbot-kun.webp?v=10-stable-parts" alt="" />
-      <img class="nji-chatbot__mascot-overlay nji-chatbot__arm-overlay nji-chatbot__arm-overlay--left" src="assets/images/chatbot-kun.webp?v=10-stable-parts" alt="" />
-      <img class="nji-chatbot__mascot-overlay nji-chatbot__arm-overlay nji-chatbot__arm-overlay--right" src="assets/images/chatbot-kun.webp?v=10-stable-parts" alt="" />
-      <span class="nji-chatbot__lid nji-chatbot__lid--left"></span>
-      <span class="nji-chatbot__lid nji-chatbot__lid--right"></span>
-      <span class="nji-chatbot__mouth"><i></i></span>
-      <span class="nji-chatbot__zzz nji-chatbot__zzz--1">Z</span>
-      <span class="nji-chatbot__zzz nji-chatbot__zzz--2">ZZ</span>
-      <span class="nji-chatbot__zzz nji-chatbot__zzz--3">ZZZ</span>
-    `;
     launcher.prepend(stage);
+
+    const base = 'assets/images/chatbot-parts/';
+    const defs = [
+      ['body','01_body.png'],['armLeft','02_arm_left.png'],['armRight','03_arm_right.png'],
+      ['eyeLOpen','04_eye_left_open.png'],['eyeROpen','05_eye_right_open.png'],
+      ['eyeLClose','06_eye_left_close.png'],['eyeRClose','07_eye_right_close.png'],
+      ['eyeHalfL','08_eye_half.png'],['eyeHalfR','08_eye_half.png'],
+      ['mouthNormal','09_mouth_normal.png'],['mouthHalf','10_mouth_half.png'],['mouthYawn','11_mouth_yawn.png'],
+      ['footLeft','12_foot_left.png'],['footRight','13_foot_right.png'],['antenna','14_antenna.png'],
+      ['cheekLeft','15_cheek_left.png'],['cheekRight','16_cheek_right.png'],
+      ['z1','17_z.png'],['z2','18_zz.png'],['z3','19_zzz.png']
+    ];
+
+    const parts = {};
+    defs.forEach(([name,file]) => {
+      const img = document.createElement('img');
+      img.className = `nji-chatbot__part nji-chatbot__part--${name}`;
+      img.src = base + file;
+      img.alt = '';
+      img.decoding = 'async';
+      img.draggable = false;
+      stage.appendChild(img);
+      parts[name] = img;
+    });
 
     const oldStyle = document.querySelector('style[data-nji-chatbot-character-style]');
     if (oldStyle) oldStyle.remove();
@@ -43,36 +55,20 @@
       .nji-chatbot{--nji-bg:#fff!important;--nji-panel:#fff!important;--nji-line:#e3e8ef!important;--nji-text:#13243b!important;--nji-muted:#6d7b8d!important;--nji-accent:#245fae!important;color:#13243b!important}
       .nji-chatbot__launcher{width:207px!important;height:207px!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;overflow:visible!important;transform:none!important}
       .nji-chatbot__launcher:hover{transform:none!important}
-      .nji-chatbot__launcher-label{z-index:30;right:222px!important}
-      .nji-chatbot__mascot-stage{position:absolute;inset:0;display:block;z-index:2;overflow:visible;pointer-events:none;filter:drop-shadow(0 14px 18px rgba(0,0,0,.22))}
-      .nji-chatbot__mascot-base,.nji-chatbot__mascot-overlay{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;pointer-events:none;user-select:none;-webkit-user-drag:none}
-      .nji-chatbot__mascot-base{z-index:1}
-      .nji-chatbot__body-overlay{z-index:2;clip-path:polygon(14% 36%,21% 24%,34% 16%,50% 13%,67% 17%,80% 27%,88% 41%,91% 58%,86% 73%,74% 84%,59% 90%,43% 90%,28% 85%,18% 74%,12% 58%);transform-origin:52% 78%;animation:njiBreath 3.6s cubic-bezier(.45,0,.55,1) infinite;opacity:.96}
-      .nji-chatbot__arm-overlay--left{z-index:6;clip-path:polygon(0 22%,12% 20%,23% 28%,29% 40%,27% 53%,18% 63%,6% 64%,0 55%);transform-origin:24% 48%;opacity:0}
-      .nji-chatbot__arm-overlay--right{z-index:3;clip-path:polygon(79% 47%,91% 49%,100% 58%,100% 81%,93% 87%,82% 78%,78% 64%);transform-origin:82% 60%;opacity:0}
-      .nji-chatbot__lid{position:absolute;z-index:10;width:13.5%;height:17%;border-radius:55%;background:linear-gradient(180deg,#fff64b 0%,#ffe51d 55%,#ffd51a 100%);opacity:0;transform:scaleY(0);transform-origin:center top}
-      .nji-chatbot__lid--left{left:31.5%;top:31%;rotate:-4deg}.nji-chatbot__lid--right{left:64%;top:32%;rotate:3deg}
-      .nji-chatbot__mouth{position:absolute;z-index:11;left:42%;top:44%;width:20%;height:16%;border-radius:48% 48% 54% 54%;background:linear-gradient(#4b170e,#6c2018 58%,#2d0d0a);border:1px solid rgba(80,32,18,.35);opacity:0;transform:scale(.35,.2);transform-origin:center;overflow:hidden}
-      .nji-chatbot__mouth i{position:absolute;left:16%;right:16%;bottom:8%;height:44%;border-radius:50%;background:linear-gradient(#ff8e7b,#ff6758)}
-      .nji-chatbot__zzz{position:absolute;z-index:14;color:#17365f;font-weight:900;line-height:1;opacity:0;text-shadow:0 2px 7px rgba(255,255,255,.95)}
-      .nji-chatbot__zzz--1{font-size:14px;right:16%;top:18%}.nji-chatbot__zzz--2{font-size:17px;right:8%;top:10%}.nji-chatbot__zzz--3{font-size:20px;right:-1%;top:2%}
-      @keyframes njiBreath{0%,100%{transform:scale(1)}45%{transform:scale(1.008,1.012)}62%{transform:scale(1.004,1.006)}}
-      .nji-chatbot__mascot-stage.is-wave .nji-chatbot__arm-overlay--left{opacity:1;animation:njiArmWave 1.8s cubic-bezier(.34,1.45,.64,1) 1}
-      @keyframes njiArmWave{0%,100%{transform:rotate(0)}15%{transform:rotate(-20deg)}32%{transform:rotate(16deg)}49%{transform:rotate(-14deg)}66%{transform:rotate(11deg)}82%{transform:rotate(-5deg)}}
-      .nji-chatbot__mascot-stage.is-blink .nji-chatbot__lid{opacity:1;animation:njiBlink .62s cubic-bezier(.4,0,.2,1) 1}
-      @keyframes njiBlink{0%,18%,82%,100%{transform:scaleY(0)}42%,58%{transform:scaleY(1)}}
-      .nji-chatbot__mascot-stage.is-yawn .nji-chatbot__lid{opacity:1;animation:njiYawnEyes 2.2s ease-in-out 1}
-      .nji-chatbot__mascot-stage.is-yawn .nji-chatbot__mouth{opacity:1;animation:njiYawnMouth 2.2s cubic-bezier(.34,1.1,.64,1) 1}
-      .nji-chatbot__mascot-stage.is-yawn .nji-chatbot__body-overlay{animation:njiYawnBody 2.2s cubic-bezier(.34,1.1,.64,1) 1}
-      @keyframes njiYawnEyes{0%,100%{transform:scaleY(0)}24%,76%{transform:scaleY(.72)}45%,62%{transform:scaleY(1)}}
-      @keyframes njiYawnMouth{0%,100%{transform:scale(.35,.2)}28%{transform:scale(.75,.7)}48%,64%{transform:scale(1.05,1.18)}82%{transform:scale(.68,.56)}}
-      @keyframes njiYawnBody{0%,100%{transform:scale(1)}25%{transform:scale(.995,1.01)}50%{transform:scale(1.012,1.035)}72%{transform:scale(1.006,1.018)}}
-      .nji-chatbot__mascot-stage.is-sleep .nji-chatbot__lid{opacity:1;animation:njiSleepEyes 3.6s ease-in-out 1}
-      .nji-chatbot__mascot-stage.is-sleep .nji-chatbot__body-overlay{animation:njiSleepBody 3.6s cubic-bezier(.45,0,.55,1) 1}
-      .nji-chatbot__mascot-stage.is-sleep .nji-chatbot__zzz--1{animation:njiZ 3.6s .55s ease-out 1}.nji-chatbot__mascot-stage.is-sleep .nji-chatbot__zzz--2{animation:njiZ 3.6s 1.15s ease-out 1}.nji-chatbot__mascot-stage.is-sleep .nji-chatbot__zzz--3{animation:njiZ 3.6s 1.75s ease-out 1}
-      @keyframes njiSleepEyes{0%,100%{transform:scaleY(0)}16%,86%{transform:scaleY(1)}}
-      @keyframes njiSleepBody{0%,100%{transform:scale(1)}25%{transform:scale(1.005,1.014)}50%{transform:scale(.998,.99)}75%{transform:scale(1.006,1.015)}}
-      @keyframes njiZ{0%{opacity:0;transform:translate(0,7px) scale(.7)}18%,58%{opacity:1;transform:translate(3px,-2px) scale(1)}82%,100%{opacity:0;transform:translate(8px,-12px) scale(1.12)}}
+      .nji-chatbot__launcher-label{z-index:40;right:222px!important}
+      .nji-chatbot__mascot-stage{position:absolute;inset:0;z-index:2;display:block;overflow:visible;pointer-events:none;filter:drop-shadow(0 14px 18px rgba(0,0,0,.22))}
+      .nji-chatbot__part{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;pointer-events:none;user-select:none;-webkit-user-drag:none;will-change:transform,opacity}
+      .nji-chatbot__part--footLeft,.nji-chatbot__part--footRight{z-index:1}
+      .nji-chatbot__part--antenna{z-index:2;transform-origin:53% 27%}
+      .nji-chatbot__part--body{z-index:3;transform-origin:50% 62%}
+      .nji-chatbot__part--armRight{z-index:4;transform-origin:76% 51%}
+      .nji-chatbot__part--armLeft{z-index:5;transform-origin:27% 48%}
+      .nji-chatbot__part--cheekLeft,.nji-chatbot__part--cheekRight{z-index:6}
+      .nji-chatbot__part--eyeLOpen,.nji-chatbot__part--eyeROpen,.nji-chatbot__part--eyeLClose,.nji-chatbot__part--eyeRClose,.nji-chatbot__part--eyeHalfL,.nji-chatbot__part--eyeHalfR{z-index:7}
+      .nji-chatbot__part--mouthNormal,.nji-chatbot__part--mouthHalf,.nji-chatbot__part--mouthYawn{z-index:8}
+      .nji-chatbot__part--z1,.nji-chatbot__part--z2,.nji-chatbot__part--z3{z-index:12}
+      .nji-chatbot__part--eyeLClose,.nji-chatbot__part--eyeRClose,.nji-chatbot__part--eyeHalfL,.nji-chatbot__part--eyeHalfR,.nji-chatbot__part--mouthHalf,.nji-chatbot__part--mouthYawn,.nji-chatbot__part--z1,.nji-chatbot__part--z2,.nji-chatbot__part--z3{opacity:0}
+      .nji-chatbot__part--eyeHalfR{transform:translateX(28.4%)}
 
       .nji-chatbot__panel{bottom:225px!important;background:#fff!important;border:1px solid #dce4ee!important;color:#13243b!important;box-shadow:0 24px 68px rgba(10,31,58,.24)!important;overflow:visible!important;isolation:isolate}
       .nji-chatbot__panel::after{content:'';position:absolute;right:72px;bottom:-15px;width:30px;height:30px;background:#fff;border-right:1px solid #dce4ee;border-bottom:1px solid #dce4ee;transform:rotate(45deg);z-index:-1}
@@ -81,45 +77,194 @@
       .nji-chatbot__choice{background:#fff!important;border-color:#bfd0e6!important;color:#18314f!important}.nji-chatbot__choice small{color:#6f7f92!important}.nji-chatbot__action{background:#f2f5f9!important;border-color:#dce4ee!important;color:#17365f!important}.nji-chatbot__action.is-primary{background:#17365f!important;border-color:#17365f!important;color:#fff!important}
       .nji-chatbot__inputbar{background:#fff!important;border-top:1px solid #e3e8ef!important}.nji-chatbot__input{background:#fff!important;border-color:#cbd6e4!important;color:#13243b!important}.nji-chatbot__send{background:#17365f!important;color:#fff!important}.nji-chatbot__foot{background:#fff!important;color:#8491a1!important;border-radius:0 0 22px 22px}.back-to-top{right:252px!important}
       @media(max-width:640px){.nji-chatbot{right:12px!important;bottom:12px!important}.nji-chatbot__launcher{width:98px!important;height:98px!important}.nji-chatbot__mascot-stage{filter:drop-shadow(0 8px 12px rgba(0,0,0,.2))}.nji-chatbot__panel{bottom:120px!important;border-radius:18px!important}.nji-chatbot__panel::after{right:38px;bottom:-12px;width:24px;height:24px}.nji-chatbot__head{border-radius:18px 18px 0 0}.nji-chatbot__foot{border-radius:0 0 18px 18px}.back-to-top{right:126px!important}}
-      @media(prefers-reduced-motion:reduce){.nji-chatbot__body-overlay,.nji-chatbot__arm-overlay,.nji-chatbot__lid,.nji-chatbot__mouth,.nji-chatbot__zzz{animation:none!important}}
     `;
     document.head.appendChild(style);
 
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const classes = ['is-wave','is-blink','is-yawn','is-sleep'];
-    const actions = [
-      { cls:'is-blink', ms:700 },
-      { cls:'is-blink', ms:700 },
-      { cls:'is-wave', ms:1900 },
-      { cls:'is-yawn', ms:2300 },
-      { cls:'is-sleep', ms:3800 }
-    ];
+    let state = 'idle';
     let timer = 0;
-    let finish = 0;
+    const running = new Set();
+    let breathing = [];
 
-    const clear = () => {
-      classes.forEach((c) => stage.classList.remove(c));
-      if (finish) { clearTimeout(finish); finish = 0; }
+    const torsoParts = [parts.body,parts.eyeLOpen,parts.eyeROpen,parts.mouthNormal,parts.cheekLeft,parts.cheekRight,parts.antenna];
+    const resetOpacity = () => {
+      parts.eyeLOpen.style.opacity='1'; parts.eyeROpen.style.opacity='1';
+      parts.eyeLClose.style.opacity='0'; parts.eyeRClose.style.opacity='0';
+      parts.eyeHalfL.style.opacity='0'; parts.eyeHalfR.style.opacity='0';
+      parts.mouthNormal.style.opacity='1'; parts.mouthHalf.style.opacity='0'; parts.mouthYawn.style.opacity='0';
+      parts.z1.style.opacity='0'; parts.z2.style.opacity='0'; parts.z3.style.opacity='0';
     };
+
+    const animate = (el,keyframes,options) => {
+      const a = el.animate(keyframes,options);
+      running.add(a);
+      const done = a.finished.catch(()=>{}).finally(()=>running.delete(a));
+      return done;
+    };
+    const cancelRunning = () => { running.forEach((a)=>a.cancel()); running.clear(); };
+    const stopBreathing = () => { breathing.forEach((a)=>a.cancel()); breathing=[]; };
+    const startBreathing = () => {
+      stopBreathing();
+      if (reduced.matches || state !== 'idle') return;
+      const k = [
+        {transform:'scale(1,1)',offset:0},
+        {transform:'scale(0.998,0.997)',offset:.18},
+        {transform:'scale(1.009,1.014)',offset:.52},
+        {transform:'scale(1.003,1.006)',offset:.72},
+        {transform:'scale(1,1)',offset:1}
+      ];
+      torsoParts.forEach((el,i)=>{
+        const a=el.animate(k,{duration:3600+i*35,iterations:Infinity,easing:'cubic-bezier(.45,0,.55,1)'});
+        breathing.push(a);
+      });
+    };
+
+    const hardReset = () => {
+      cancelRunning(); stopBreathing(); resetOpacity();
+      Object.values(parts).forEach((el)=>{el.style.transform='';});
+      parts.eyeHalfR.style.transform='translateX(28.4%)';
+    };
+
     const schedule = () => {
       if (timer) clearTimeout(timer);
-      if (reduced.matches) return;
-      timer = setTimeout(run, 6000 + Math.random() * 8000);
+      if (reduced.matches || state !== 'idle' || document.hidden || root?.classList.contains('is-open')) return;
+      timer=setTimeout(()=>playRandom(),6500+Math.random()*7500);
     };
-    const run = () => {
-      timer = 0;
-      if (document.hidden || root?.classList.contains('is-open') || reduced.matches) { schedule(); return; }
-      clear();
-      const a = actions[Math.floor(Math.random() * actions.length)];
-      stage.classList.add(a.cls);
-      finish = setTimeout(() => { clear(); schedule(); }, a.ms);
+
+    const enterIdle = () => {
+      state='idle'; hardReset(); startBreathing(); schedule();
     };
-    launcher.addEventListener('click', () => { clear(); schedule(); });
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) { clear(); if (timer) { clearTimeout(timer); timer = 0; } }
-      else schedule();
+
+    const blink = async () => {
+      if (state!=='idle') return;
+      state='blink'; stopBreathing();
+      await Promise.all([
+        animate(parts.eyeLOpen,[{opacity:1},{opacity:0}],{duration:90,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'}),
+        animate(parts.eyeROpen,[{opacity:1},{opacity:0}],{duration:90,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'}),
+        animate(parts.eyeLClose,[{opacity:0},{opacity:1}],{duration:95,easing:'ease-out',fill:'forwards'}),
+        animate(parts.eyeRClose,[{opacity:0},{opacity:1}],{duration:95,easing:'ease-out',fill:'forwards'})
+      ]);
+      await new Promise(r=>setTimeout(r,70));
+      await Promise.all([
+        animate(parts.eyeLOpen,[{opacity:0},{opacity:1}],{duration:135,easing:'cubic-bezier(0,0,.2,1)',fill:'forwards'}),
+        animate(parts.eyeROpen,[{opacity:0},{opacity:1}],{duration:135,easing:'cubic-bezier(0,0,.2,1)',fill:'forwards'}),
+        animate(parts.eyeLClose,[{opacity:1},{opacity:0}],{duration:120,easing:'ease-in',fill:'forwards'}),
+        animate(parts.eyeRClose,[{opacity:1},{opacity:0}],{duration:120,easing:'ease-in',fill:'forwards'})
+      ]);
+      enterIdle();
+    };
+
+    const wave = async () => {
+      if (state!=='idle') return;
+      state='wave'; stopBreathing();
+      const main=animate(parts.armLeft,[
+        {transform:'rotate(0deg)',offset:0},
+        {transform:'rotate(-7deg)',offset:.10},
+        {transform:'rotate(24deg)',offset:.25},
+        {transform:'rotate(-14deg)',offset:.42},
+        {transform:'rotate(20deg)',offset:.58},
+        {transform:'rotate(-9deg)',offset:.74},
+        {transform:'rotate(7deg)',offset:.88},
+        {transform:'rotate(0deg)',offset:1}
+      ],{duration:1750,easing:'cubic-bezier(.2,.85,.25,1)',fill:'forwards'});
+      const secondary=animate(parts.antenna,[
+        {transform:'rotate(0deg)'},{transform:'rotate(-3deg)',offset:.22},{transform:'rotate(4deg)',offset:.48},{transform:'rotate(-2deg)',offset:.72},{transform:'rotate(0deg)'}
+      ],{duration:1500,delay:120,easing:'cubic-bezier(.25,.8,.3,1)',fill:'forwards'});
+      const counter=animate(parts.armRight,[{transform:'rotate(0deg)'},{transform:'rotate(-2deg)',offset:.4},{transform:'rotate(1deg)',offset:.72},{transform:'rotate(0deg)'}],{duration:1300,delay:180,easing:'ease-in-out',fill:'forwards'});
+      await Promise.all([main,secondary,counter]);
+      enterIdle();
+    };
+
+    const yawn = async () => {
+      if (state!=='idle') return;
+      state='yawn'; stopBreathing();
+      const faceParts=[parts.body,parts.cheekLeft,parts.cheekRight,parts.eyeHalfL,parts.eyeHalfR,parts.mouthHalf,parts.mouthYawn];
+      await Promise.all([
+        animate(parts.eyeLOpen,[{opacity:1},{opacity:0}],{duration:220,easing:'ease-in',fill:'forwards'}),
+        animate(parts.eyeROpen,[{opacity:1},{opacity:0}],{duration:220,easing:'ease-in',fill:'forwards'}),
+        animate(parts.eyeHalfL,[{opacity:0},{opacity:1}],{duration:260,easing:'ease-out',fill:'forwards'}),
+        animate(parts.eyeHalfR,[{opacity:0},{opacity:1}],{duration:260,easing:'ease-out',fill:'forwards'}),
+        animate(parts.mouthNormal,[{opacity:1},{opacity:0}],{duration:180,easing:'ease-in',fill:'forwards'}),
+        animate(parts.mouthHalf,[{opacity:0},{opacity:1}],{duration:220,easing:'ease-out',fill:'forwards'})
+      ]);
+      await new Promise(r=>setTimeout(r,120));
+      const stretch=[
+        {transform:'scale(1,1)',offset:0},
+        {transform:'scale(1.006,.986)',offset:.14},
+        {transform:'scale(.996,1.035)',offset:.46},
+        {transform:'scale(1.01,1.018)',offset:.68},
+        {transform:'scale(1,1)',offset:1}
+      ];
+      const bodyMoves=faceParts.map((el,i)=>animate(el,stretch,{duration:1450,delay:i*12,easing:'cubic-bezier(.18,.86,.3,1.18)',fill:'forwards'}));
+      const mouthOpen=Promise.all([
+        animate(parts.mouthHalf,[{opacity:1,transform:'scale(1)'},{opacity:0,transform:'scale(.85)'}],{duration:260,easing:'ease-in',fill:'forwards'}),
+        animate(parts.mouthYawn,[{opacity:0,transform:'scale(.65,.45)'},{opacity:1,transform:'scale(1.05,1.12)',offset:.55},{opacity:1,transform:'scale(1,1)'}],{duration:720,easing:'cubic-bezier(.2,.85,.25,1.2)',fill:'forwards'})
+      ]);
+      await Promise.all([...bodyMoves,mouthOpen,animate(parts.antenna,[{transform:'rotate(0)'},{transform:'rotate(3deg)',offset:.55},{transform:'rotate(-1deg)',offset:.8},{transform:'rotate(0)'}],{duration:1450,delay:120,easing:'ease-in-out',fill:'forwards'})]);
+      await new Promise(r=>setTimeout(r,220));
+      await Promise.all([
+        animate(parts.mouthYawn,[{opacity:1},{opacity:0}],{duration:220,easing:'ease-in',fill:'forwards'}),
+        animate(parts.mouthNormal,[{opacity:0},{opacity:1}],{duration:260,easing:'ease-out',fill:'forwards'}),
+        animate(parts.eyeHalfL,[{opacity:1},{opacity:0}],{duration:200,easing:'ease-in',fill:'forwards'}),
+        animate(parts.eyeHalfR,[{opacity:1},{opacity:0}],{duration:200,easing:'ease-in',fill:'forwards'}),
+        animate(parts.eyeLOpen,[{opacity:0},{opacity:1}],{duration:260,easing:'ease-out',fill:'forwards'}),
+        animate(parts.eyeROpen,[{opacity:0},{opacity:1}],{duration:260,easing:'ease-out',fill:'forwards'})
+      ]);
+      enterIdle();
+    };
+
+    const sleepMotion = async () => {
+      if (state!=='idle') return;
+      state='sleep'; stopBreathing();
+      await Promise.all([
+        animate(parts.eyeLOpen,[{opacity:1},{opacity:0}],{duration:260,easing:'ease-in',fill:'forwards'}),
+        animate(parts.eyeROpen,[{opacity:1},{opacity:0}],{duration:260,easing:'ease-in',fill:'forwards'}),
+        animate(parts.eyeLClose,[{opacity:0},{opacity:1}],{duration:300,easing:'ease-out',fill:'forwards'}),
+        animate(parts.eyeRClose,[{opacity:0},{opacity:1}],{duration:300,easing:'ease-out',fill:'forwards'})
+      ]);
+      const slowBreath=[{transform:'scale(1)'},{transform:'scale(1.006,1.014)'},{transform:'scale(.998,.994)'},{transform:'scale(1.006,1.014)'},{transform:'scale(1)'}];
+      const sleepParts=[parts.body,parts.eyeLClose,parts.eyeRClose,parts.mouthNormal,parts.cheekLeft,parts.cheekRight,parts.antenna];
+      const breathePromises=sleepParts.map((el,i)=>animate(el,slowBreath,{duration:3300,delay:i*18,easing:'cubic-bezier(.45,0,.55,1)',fill:'forwards'}));
+      const zAnim=(el,delay)=>animate(el,[
+        {opacity:0,transform:'translate(0,8px) scale(.72)'},
+        {opacity:1,transform:'translate(2px,0) scale(1)',offset:.24},
+        {opacity:1,transform:'translate(6px,-8px) scale(1.08)',offset:.62},
+        {opacity:0,transform:'translate(11px,-19px) scale(1.16)'}
+      ],{duration:1800,delay,easing:'cubic-bezier(.18,.7,.25,1)',fill:'forwards'});
+      await Promise.all([...breathePromises,zAnim(parts.z1,380),zAnim(parts.z2,900),zAnim(parts.z3,1420)]);
+      state='wake';
+      await Promise.all([
+        animate(parts.eyeLClose,[{opacity:1},{opacity:0}],{duration:170,easing:'ease-in',fill:'forwards'}),
+        animate(parts.eyeRClose,[{opacity:1},{opacity:0}],{duration:170,easing:'ease-in',fill:'forwards'}),
+        animate(parts.eyeLOpen,[{opacity:0},{opacity:1}],{duration:240,easing:'ease-out',fill:'forwards'}),
+        animate(parts.eyeROpen,[{opacity:0},{opacity:1}],{duration:240,easing:'ease-out',fill:'forwards'}),
+        animate(parts.body,[{transform:'scale(1)'},{transform:'scale(1.015,.985)',offset:.35},{transform:'scale(.995,1.012)',offset:.62},{transform:'scale(1)'}],{duration:520,easing:'cubic-bezier(.2,.9,.3,1.15)',fill:'forwards'}),
+        animate(parts.antenna,[{transform:'rotate(0)'},{transform:'rotate(-4deg)',offset:.35},{transform:'rotate(2deg)',offset:.65},{transform:'rotate(0)'}],{duration:620,easing:'ease-out',fill:'forwards'})
+      ]);
+      enterIdle();
+    };
+
+    const actions=[blink,blink,wave,yawn,sleepMotion];
+    const playRandom=()=>{
+      if(state!=='idle'||document.hidden||root?.classList.contains('is-open')||reduced.matches){schedule();return;}
+      const fn=actions[Math.floor(Math.random()*actions.length)];
+      fn();
+    };
+
+    launcher.addEventListener('click',()=>{
+      if(timer){clearTimeout(timer);timer=0;}
+      hardReset(); state='idle';
     });
-    schedule();
+    document.addEventListener('visibilitychange',()=>{
+      if(document.hidden){if(timer){clearTimeout(timer);timer=0;} hardReset(); state='idle';}
+      else enterIdle();
+    });
+    new MutationObserver(()=>{
+      if(root?.classList.contains('is-open')){if(timer){clearTimeout(timer);timer=0;} hardReset(); state='idle';}
+      else enterIdle();
+    }).observe(root,{attributes:true,attributeFilter:['class']});
+
+    enterIdle();
   });
 
   document.head.appendChild(core);
