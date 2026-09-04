@@ -5,7 +5,7 @@
   if (!self || document.querySelector('script[data-nji-chatbot-core]')) return;
 
   const core = document.createElement('script');
-  core.src = new URL('chatbot-core.js?v=4-character', self.src).href;
+  core.src = new URL('chatbot-core.js?v=5-character-xl', self.src).href;
   core.async = false;
   core.setAttribute('data-nji-chatbot-core', '');
 
@@ -28,22 +28,16 @@
     style.textContent = `
       .nji-chatbot__launcher-character{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;border-radius:50%;pointer-events:none;z-index:0}
       .nji-chatbot__launcher-label{z-index:2}
-      .nji-chatbot__launcher{width:76px!important;height:76px!important;padding:0!important;border-radius:50%!important;background:#fff!important;border:2px solid rgba(255,255,255,.92)!important;box-shadow:0 18px 44px rgba(0,0,0,.34)!important}
-      .nji-chatbot__launcher:hover{transform:translateY(-3px) scale(1.02)!important}
-      .nji-chatbot__panel{bottom:92px!important}
-      .nji-chatbot__launcher-label{right:88px!important}
-      .back-to-top{right:118px!important}
-      body.home-page .nji-chatbot__launcher{width:92px!important;height:92px!important}
-      body.home-page .nji-chatbot__panel{bottom:108px!important}
-      body.home-page .nji-chatbot__launcher-label{right:104px!important}
-      body.home-page .back-to-top{right:138px!important}
+      .nji-chatbot__launcher{width:138px!important;height:138px!important;padding:0!important;border-radius:50%!important;background:#fff!important;border:3px solid rgba(255,255,255,.94)!important;box-shadow:0 22px 56px rgba(0,0,0,.38)!important;overflow:hidden!important}
+      .nji-chatbot__launcher:hover{transform:translateY(-4px) scale(1.025)!important}
+      .nji-chatbot__panel{bottom:154px!important}
+      .nji-chatbot__launcher-label{right:152px!important}
+      .back-to-top{right:184px!important}
       @media (max-width:640px){
-        .nji-chatbot__launcher{width:68px!important;height:68px!important}
-        .nji-chatbot__panel{bottom:92px!important}
-        .back-to-top{right:94px!important}
-        body.home-page .nji-chatbot__launcher{width:78px!important;height:78px!important}
-        body.home-page .nji-chatbot__panel{bottom:102px!important}
-        body.home-page .back-to-top{right:104px!important}
+        .nji-chatbot{right:14px!important;bottom:14px!important}
+        .nji-chatbot__launcher{width:116px!important;height:116px!important;border-width:3px!important}
+        .nji-chatbot__panel{bottom:138px!important}
+        .back-to-top{right:142px!important}
       }
     `;
     document.head.appendChild(style);
