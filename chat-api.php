@@ -43,42 +43,49 @@ function enforce_rate_limit(): void {
     $fp = @fopen($path, 'c+');
     if (!$fp) return;
 
-    try {
-        if (!flock($fp, LOCK_EX)) return;
-        $raw = stream_get_contents($fp);
-        $timestamps = json_decode($raw ?: '[]', true);
-        if (!is_array($timestamps)) $timestamps = [];
-        $timestamps = array_values(array_filter($timestamps, static function ($ts) use ($now, $window) {
-            return is_int($ts) && $ts > ($now - $window);
-        }));
-        if (count($timestamps) >= $limit) {
-            flock($fp, LOCK_UN);
-            fclose($fp);
-            respond_json(429, ['ok' => false, 'code' => 'RATE_LIMIT', 'message' => '短時間に送信できる回数を超えました。少し時間をおいて再度お試しください。']);
-        }
-        $timestamps[] = $now;
-        ftruncate($fp, 0);
-        rewind($fp);
-        fwrite($fp, json_encode($timestamps));
-        fflush($fp);
-        flock($fp, LOCK_UN);
-    } finally {
-        if (is_resource($fp)) fclose($fp);
+    if (!flock($fp, LOCK_EX)) {
+        fclose($fp);
+        return;
     }
+
+    $raw = stream_get_contents($fp);
+    $timestamps = json_decode($raw ?: '[]', true);
+    if (!is_array($timestamps)) $timestamps = [];
+    $timestamps = array_values(array_filter($timestamps, static function ($ts) use ($now, $window) {
+        return is_int($ts) && $ts > ($now - $window);
+    }));
+
+    if (count($timestamps) >= $limit) {
+        flock($fp, LOCK_UN);
+        fclose($fp);
+        respond_json(429, [
+            'ok' => false,
+            'code' => 'RATE_LIMIT',
+            'message' => '短時間に送信できる回数を超えました。少し時間をおいて再度お試しください。'
+        ]);
+    }
+
+    $timestamps[] = $now;
+    ftruncate($fp, 0);
+    rewind($fp);
+    fwrite($fp, json_encode($timestamps));
+    fflush($fp);
+    flock($fp, LOCK_UN);
+    fclose($fp);
 }
 
 function get_api_key(): string {
-    $key = getenv('OPENAI_API_KEY');
+    $key = getenv('GEMINI_API_KEY');
     if (is_string($key) && trim($key) !== '') return trim($key);
 
-    // Optional private configuration outside the public web root.
-    $privateConfig = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'nextji-openai-key.php';
+    // Recommended fallback: keep this file outside the public web root.
+    $privateConfig = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'nextji-gemini-key.php';
     if (is_file($privateConfig)) {
         $value = require $privateConfig;
         if (is_string($value) && trim($value) !== '') return trim($value);
     }
 
-    // Local fallback. Never commit this file to a public repository.
+    // Last-resort local config. This filename is ignored by Git.
     $localConfig = __DIR__ . DIRECTORY_SEPARATOR . 'chat-api-config.php';
     if (is_file($localConfig)) {
         $value = require $localConfig;
@@ -88,12 +95,45 @@ function get_api_key(): string {
     return '';
 }
 
-function call_openai(string $apiKey, array $payload): array {
-    $url = 'https://api.openai.com/v1/responses';
+function contains_sensitive_input(string $value): bool {
+    if (preg_match('/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i', $value)) return true;
+    if (preg_match('/(?:\+?81[-\s]?)?0\d{1,4}[-\s]?\d{1,4}[-\s]?\d{3,4}/', $value)) return true;
+    if (preg_match('/(?:\d[ -]?){13,19}/', $value)) return true;
+    return false;
+}
+
+function redact_sensitive_input(string $value): string {
+    $value = preg_replace('/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i', '[メールアドレス削除]', $value) ?? $value;
+    $value = preg_replace('/(?:\+?81[-\s]?)?0\d{1,4}[-\s]?\d{1,4}[-\s]?\d{3,4}/', '[電話番号削除]', $value) ?? $value;
+    $value = preg_replace('/(?:\d[ -]?){13,19}/', '[番号情報削除]', $value) ?? $value;
+    return $value;
+}
+
+function detect_category(string $text): string {
+    if (preg_match('/職業紹介|仕事探|仕事を探|求職|就職|求人紹介|工場求人|物流求人/u', $text)) return 'placement';
+    if (preg_match('/ホームページ|\bHP\b|\bWEB\b|サイト|\bLP\b/iu', $text)) return 'web';
+    if (preg_match('/SNS|Instagram|インスタ|MEO|Googleマップ|Google Map/iu', $text)) return 'sns';
+    if (preg_match('/AI|効率化|システム|自動化|DX/iu', $text)) return 'ai';
+    if (preg_match('/予約/u', $text)) return 'reservation';
+    if (preg_match('/アプリ/u', $text)) return 'app';
+    if (preg_match('/カメラ|防犯/u', $text)) return 'camera';
+    if (preg_match('/採用|自社求人|御社で働|応募/u', $text)) return 'recruit';
+    if (preg_match('/代理店|パートナー|協業/u', $text)) return 'partner';
+    return 'other';
+}
+
+function call_gemini(string $apiKey, array $payload): array {
+    $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent';
     $json = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     if ($json === false) {
         return ['status' => 0, 'body' => '', 'error' => 'encode_failed'];
     }
+
+    $headers = [
+        'Content-Type: application/json',
+        'x-goog-api-key: ' . $apiKey,
+        'x-goog-api-client: next-japan-innovation-chatbot/1.0'
+    ];
 
     if (function_exists('curl_init')) {
         $ch = curl_init($url);
@@ -102,11 +142,7 @@ function call_openai(string $apiKey, array $payload): array {
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_CONNECTTIMEOUT => 8,
             CURLOPT_TIMEOUT => 20,
-            CURLOPT_HTTPHEADER => [
-                'Authorization: Bearer ' . $apiKey,
-                'Content-Type: application/json',
-                'User-Agent: NextJapanInnovation-Chatbot/1.0'
-            ],
+            CURLOPT_HTTPHEADER => $headers,
             CURLOPT_POSTFIELDS => $json,
         ]);
         $body = curl_exec($ch);
@@ -121,7 +157,7 @@ function call_openai(string $apiKey, array $payload): array {
             'method' => 'POST',
             'timeout' => 20,
             'ignore_errors' => true,
-            'header' => "Authorization: Bearer {$apiKey}\r\nContent-Type: application/json\r\nUser-Agent: NextJapanInnovation-Chatbot/1.0\r\n",
+            'header' => implode("\r\n", $headers) . "\r\n",
             'content' => $json,
         ],
     ]);
@@ -133,23 +169,17 @@ function call_openai(string $apiKey, array $payload): array {
     return ['status' => $status, 'body' => is_string($body) ? $body : '', 'error' => $body === false ? 'http_failed' : ''];
 }
 
-function extract_output_text(array $response): string {
-    if (isset($response['output_text']) && is_string($response['output_text'])) {
-        return trim($response['output_text']);
-    }
-    if (!isset($response['output']) || !is_array($response['output'])) return '';
+function extract_gemini_text(array $response): string {
+    $parts = $response['candidates'][0]['content']['parts'] ?? null;
+    if (!is_array($parts)) return '';
 
-    $parts = [];
-    foreach ($response['output'] as $item) {
-        if (!is_array($item) || !isset($item['content']) || !is_array($item['content'])) continue;
-        foreach ($item['content'] as $content) {
-            if (!is_array($content)) continue;
-            if (($content['type'] ?? '') === 'output_text' && isset($content['text']) && is_string($content['text'])) {
-                $parts[] = $content['text'];
-            }
+    $texts = [];
+    foreach ($parts as $part) {
+        if (is_array($part) && isset($part['text']) && is_string($part['text'])) {
+            $texts[] = $part['text'];
         }
     }
-    return trim(implode("\n", $parts));
+    return trim(implode("\n", $texts));
 }
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
@@ -179,24 +209,44 @@ if ($message === '') {
     respond_json(400, ['ok' => false, 'code' => 'MESSAGE_REQUIRED']);
 }
 if (text_length($message) > 800) {
-    respond_json(400, ['ok' => false, 'code' => 'MESSAGE_TOO_LONG', 'message' => '質問は800文字以内で入力してください。']);
+    respond_json(400, [
+        'ok' => false,
+        'code' => 'MESSAGE_TOO_LONG',
+        'message' => '質問は800文字以内で入力してください。'
+    ]);
 }
 
-$history = [];
+// On Gemini free tier, avoid sending obvious personal/payment information to Google.
+if (contains_sensitive_input($message)) {
+    respond_json(200, [
+        'ok' => true,
+        'answer' => '個人情報を含む内容はAIには送信していません。お名前・電話番号・メールアドレスなどは、お問い合わせフォームへ直接ご入力ください。',
+        'category' => detect_category($message),
+        'suggest_contact' => true,
+    ]);
+}
+
+$contents = [];
 $historyRaw = $request['history'] ?? [];
 if (is_array($historyRaw)) {
     foreach (array_slice($historyRaw, -8) as $item) {
         if (!is_array($item)) continue;
-        $role = $item['role'] ?? '';
+        $role = (string)($item['role'] ?? '');
         $content = trim((string)($item['content'] ?? ''));
         if (($role !== 'user' && $role !== 'assistant') || $content === '') continue;
-        $history[] = [
-            'role' => $role,
-            'content' => trim_text($content, 900),
+
+        $contents[] = [
+            'role' => $role === 'assistant' ? 'model' : 'user',
+            'parts' => [[
+                'text' => trim_text(redact_sensitive_input($content), 900)
+            ]],
         ];
     }
 }
-$history[] = ['role' => 'user', 'content' => $message];
+$contents[] = [
+    'role' => 'user',
+    'parts' => [['text' => $message]],
+];
 
 $apiKey = get_api_key();
 if ($apiKey === '') {
@@ -243,46 +293,32 @@ $instructions = <<<'PROMPT'
 - 個人情報、カード情報、パスワードなどをチャット内で求めない。
 - Next Japan Innovationと無関係な雑談・一般質問には深入りせず、会社・サービスに関する相談を案内する。
 - 法律・税務・医療などの専門判断は行わない。
-- Markdown記号は使わず、プレーンテキストで回答する。
+- Markdown記号は使わない。
 
-category は次のいずれかを選ぶ：web, sns, ai, reservation, camera, app, placement, recruit, partner, other。
+必ず次のJSONだけを返してください。コードブロックは付けないでください。
+{"answer":"利用者への回答","category":"web","suggest_contact":false}
+category は web, sns, ai, reservation, camera, app, placement, recruit, partner, other のいずれか。
 suggest_contact は、見積り、料金、納期、具体的な求人、応募、採用、代理店条件、個別案件、担当者確認が必要な質問では true。それ以外の一般的な案内では false。
 PROMPT;
 
 $payload = [
-    'model' => 'gpt-5.6-luna',
-    'store' => false,
-    'max_output_tokens' => 450,
-    'instructions' => $instructions,
-    'input' => $history,
-    'text' => [
-        'format' => [
-            'type' => 'json_schema',
-            'name' => 'nji_support_response',
-            'strict' => true,
-            'schema' => [
-                'type' => 'object',
-                'properties' => [
-                    'answer' => ['type' => 'string'],
-                    'category' => [
-                        'type' => 'string',
-                        'enum' => ['web', 'sns', 'ai', 'reservation', 'camera', 'app', 'placement', 'recruit', 'partner', 'other']
-                    ],
-                    'suggest_contact' => ['type' => 'boolean']
-                ],
-                'required' => ['answer', 'category', 'suggest_contact'],
-                'additionalProperties' => false
-            ]
-        ]
-    ]
+    'systemInstruction' => [
+        'parts' => [['text' => $instructions]],
+    ],
+    'contents' => $contents,
+    'generationConfig' => [
+        'temperature' => 0.2,
+        'maxOutputTokens' => 450,
+        'responseMimeType' => 'application/json',
+    ],
 ];
 
-$result = call_openai($apiKey, $payload);
+$result = call_gemini($apiKey, $payload);
 $status = (int)($result['status'] ?? 0);
 $body = (string)($result['body'] ?? '');
 
 if ($status < 200 || $status >= 300 || $body === '') {
-    error_log('NJI chatbot OpenAI request failed. HTTP=' . $status);
+    error_log('NJI chatbot Gemini request failed. HTTP=' . $status);
     $clientStatus = $status === 429 ? 429 : 502;
     respond_json($clientStatus, [
         'ok' => false,
@@ -296,7 +332,7 @@ if (!is_array($response)) {
     respond_json(502, ['ok' => false, 'code' => 'AI_INVALID_RESPONSE']);
 }
 
-$outputText = extract_output_text($response);
+$outputText = extract_gemini_text($response);
 if ($outputText === '') {
     respond_json(502, ['ok' => false, 'code' => 'AI_EMPTY_RESPONSE']);
 }
@@ -305,13 +341,13 @@ $structured = json_decode($outputText, true);
 if (!is_array($structured)) {
     $structured = [
         'answer' => $outputText,
-        'category' => 'other',
+        'category' => detect_category($message),
         'suggest_contact' => true,
     ];
 }
 
 $answer = trim((string)($structured['answer'] ?? ''));
-$category = (string)($structured['category'] ?? 'other');
+$category = (string)($structured['category'] ?? detect_category($message));
 $suggestContact = (bool)($structured['suggest_contact'] ?? false);
 $allowed = ['web', 'sns', 'ai', 'reservation', 'camera', 'app', 'placement', 'recruit', 'partner', 'other'];
 if (!in_array($category, $allowed, true)) $category = 'other';
