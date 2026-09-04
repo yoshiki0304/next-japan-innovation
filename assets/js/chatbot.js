@@ -35,9 +35,9 @@
       .back-to-top{right:252px!important}
       @media (max-width:640px){
         .nji-chatbot{right:12px!important;bottom:12px!important}
-        .nji-chatbot__launcher{width:97px!important;height:97px!important;border-width:3px!important}
-        .nji-chatbot__panel{bottom:119px!important}
-        .back-to-top{right:125px!important}
+        .nji-chatbot__launcher{width:65px!important;height:65px!important;border-width:2px!important}
+        .nji-chatbot__panel{bottom:87px!important}
+        .back-to-top{right:93px!important}
       }
     `;
     document.head.appendChild(style);
