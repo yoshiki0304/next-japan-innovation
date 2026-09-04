@@ -19,7 +19,7 @@
       const img = document.createElement('img');
       img.className = 'nji-chatbot__launcher-character';
       img.alt = 'chatBOTくん';
-      img.src = 'assets/images/chatbot-kun.png';
+      img.src = 'assets/images/chatbot-kun.webp';
       launcher.prepend(img);
     }
 
