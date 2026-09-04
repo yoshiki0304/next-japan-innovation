@@ -7,6 +7,7 @@
   style.textContent = `
     .nji-chatbot{--nji-bg:#07111f;--nji-panel:#0b1728;--nji-line:rgba(255,255,255,.12);--nji-text:#f7f9fc;--nji-muted:#9eacbd;--nji-accent:#4b8cff;position:fixed;right:22px;bottom:22px;z-index:10000;font-family:inherit;color:var(--nji-text)}
     .nji-chatbot *{box-sizing:border-box}
+    .back-to-top{right:104px!important}
     .nji-chatbot__launcher{position:relative;width:64px;height:64px;border:1px solid rgba(255,255,255,.2);border-radius:50%;background:linear-gradient(145deg,#17345b,#07111f);color:#fff;display:grid;place-items:center;cursor:pointer;box-shadow:0 16px 42px rgba(0,0,0,.34);transition:transform .25s ease,box-shadow .25s ease;border-color:.25s ease}
     .nji-chatbot__launcher:hover{transform:translateY(-3px);box-shadow:0 20px 48px rgba(0,0,0,.42);border-color:rgba(111,163,255,.7)}
     .nji-chatbot__launcher svg{width:27px;height:27px;fill:none;stroke:currentColor;stroke-width:1.8}
@@ -40,7 +41,7 @@
     .nji-chatbot__send{width:44px;height:44px;border:0;border-radius:12px;background:#fff;color:#07111f;display:grid;place-items:center;cursor:pointer;font-weight:900}
     .nji-chatbot__foot{padding:0 14px 11px;text-align:center;color:#728196;font-size:9px;background:rgba(2,8,16,.52)}
     .nji-chatbot__foot a{color:#aab7c7;text-decoration:underline}
-    @media (max-width:640px){.nji-chatbot{right:14px;bottom:14px}.nji-chatbot__launcher{width:58px;height:58px}.nji-chatbot__launcher-label{display:none}.nji-chatbot__panel{position:fixed;left:10px;right:10px;bottom:82px;width:auto;height:min(620px,calc(100dvh - 100px));border-radius:18px;transform-origin:bottom center}.nji-chatbot__head{padding:15px}.nji-chatbot__body{padding:15px}.nji-chatbot__bubble{max-width:92%}}
+    @media (max-width:640px){.nji-chatbot{right:14px;bottom:14px}.back-to-top{right:82px!important}.nji-chatbot__launcher{width:58px;height:58px}.nji-chatbot__launcher-label{display:none}.nji-chatbot__panel{position:fixed;left:10px;right:10px;bottom:82px;width:auto;height:min(620px,calc(100dvh - 100px));border-radius:18px;transform-origin:bottom center}.nji-chatbot__head{padding:15px}.nji-chatbot__body{padding:15px}.nji-chatbot__bubble{max-width:92%}}
     @media (prefers-reduced-motion:reduce){.nji-chatbot__launcher,.nji-chatbot__panel,.nji-chatbot__launcher-label,.nji-chatbot__choice{transition:none!important}.nji-chatbot__body{scroll-behavior:auto}}
   `;
   document.head.appendChild(style);
@@ -241,7 +242,6 @@
     const text = raw.trim();
     if (!text) return;
     addBubble(text, true);
-    const t = text.toLowerCase();
 
     if (/料金|費用|価格|いくら|見積/.test(text)) {
       addBubble('料金は内容や規模によって異なるため、チャット上では固定金額を案内していません。ご希望を確認後、担当者から正式なお見積りをご案内します。');
