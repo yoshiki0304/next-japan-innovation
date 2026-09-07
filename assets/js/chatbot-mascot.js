@@ -63,18 +63,39 @@
         user-select:none!important;-webkit-user-drag:none!important;
       }
       .nji-chatbot__launcher-label{z-index:40;right:222px!important}
-      .nji-chatbot__panel{bottom:225px!important;background:#fff!important;border:1px solid #dce4ee!important;color:#13243b!important;box-shadow:0 24px 68px rgba(10,31,58,.24)!important;overflow:visible!important;isolation:isolate}
+      .nji-chatbot__panel{
+        bottom:225px!important;
+        height:min(620px,calc(100dvh - 249px))!important;
+        max-height:calc(100dvh - 249px)!important;
+        min-height:280px;
+        background:#fff!important;border:1px solid #dce4ee!important;color:#13243b!important;
+        box-shadow:0 24px 68px rgba(10,31,58,.24)!important;overflow:hidden!important;isolation:isolate;
+      }
+      .nji-chatbot__body{min-height:0!important;overflow-y:auto!important;overscroll-behavior-y:contain!important}
       .nji-chatbot__panel::after{content:'';position:absolute;right:72px;bottom:-15px;width:30px;height:30px;background:#fff;border-right:1px solid #dce4ee;border-bottom:1px solid #dce4ee;transform:rotate(45deg);z-index:-1}
       .nji-chatbot__head{background:#fff!important;border-bottom:1px solid #e3e8ef!important;border-radius:22px 22px 0 0}.nji-chatbot__eyebrow{color:#245fae!important}.nji-chatbot__title{color:#13243b!important}.nji-chatbot__status{color:#6d7b8d!important}
       .nji-chatbot__close{background:#f1f4f8!important;color:#13243b!important}.nji-chatbot__body{background:#fff!important;color:#13243b!important}.nji-chatbot__bubble{background:#f2f5f9!important;border-color:#e1e7ef!important;color:#1b2d45!important}.nji-chatbot__row.is-user .nji-chatbot__bubble{background:#17365f!important;border-color:#17365f!important;color:#fff!important}
       .nji-chatbot__choice{background:#fff!important;border-color:#bfd0e6!important;color:#18314f!important}.nji-chatbot__choice small{color:#6f7f92!important}.nji-chatbot__action{background:#f2f5f9!important;border-color:#dce4ee!important;color:#17365f!important}.nji-chatbot__action.is-primary{background:#17365f!important;border-color:#17365f!important;color:#fff!important}
-      .nji-chatbot__inputbar{background:#fff!important;border-top:1px solid #e3e8ef!important}.nji-chatbot__input{background:#fff!important;border-color:#cbd6e4!important;color:#13243b!important}.nji-chatbot__send{background:#17365f!important;color:#fff!important}.nji-chatbot__foot{background:#fff!important;color:#8491a1!important;border-radius:0 0 22px 22px}.back-to-top{right:252px!important}
+      .nji-chatbot__inputbar{background:#fff!important;border-top:1px solid #e3e8ef!important;flex:0 0 auto!important}.nji-chatbot__input{background:#fff!important;border-color:#cbd6e4!important;color:#13243b!important}.nji-chatbot__send{background:#17365f!important;color:#fff!important}.nji-chatbot__foot{background:#fff!important;color:#8491a1!important;border-radius:0 0 22px 22px;flex:0 0 auto!important}.back-to-top{right:252px!important}
       @media(max-width:640px){
         .nji-chatbot{right:14px!important;bottom:14px!important;overflow:visible!important}
         .nji-chatbot__launcher,.nji-chatbot__mascot-stage,.nji-chatbot__mascot-motion{width:98px!important;height:98px!important}
         .nji-chatbot__static-mascot{width:98px!important;height:98px!important;filter:drop-shadow(0 8px 12px rgba(0,0,0,.2))}
-        .nji-chatbot__panel{bottom:120px!important;border-radius:18px!important}.nji-chatbot__panel::after{right:38px;bottom:-12px;width:24px;height:24px}
+        .nji-chatbot__panel{
+          bottom:120px!important;
+          height:min(620px,calc(100dvh - 140px))!important;
+          max-height:calc(100dvh - 140px)!important;
+          min-height:260px;
+          border-radius:18px!important;
+        }
+        .nji-chatbot__panel::after{right:38px;bottom:-12px;width:24px;height:24px}
         .nji-chatbot__head{border-radius:18px 18px 0 0}.nji-chatbot__foot{border-radius:0 0 18px 18px}.back-to-top{right:126px!important}
+      }
+      @media(max-height:560px) and (min-width:641px){
+        .nji-chatbot__panel{min-height:220px;height:calc(100dvh - 237px)!important;max-height:calc(100dvh - 237px)!important}
+        .nji-chatbot__head{padding-top:12px!important;padding-bottom:10px!important}
+        .nji-chatbot__inputbar{padding-top:8px!important;padding-bottom:8px!important}
+        .nji-chatbot__foot{display:none!important}
       }
     `;
     document.head.appendChild(style);
