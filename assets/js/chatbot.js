@@ -61,7 +61,7 @@
         bubble.setAttribute('aria-label', '回答を作成中');
         let index = 0;
 
-        // Show ChatGPT-like thinking dots during the 3-6 second reply delay.
+        // Show thinking dots during the 3-6 second reply delay.
         const thinkingFrames = ['・', '・・', '・・・'];
         let thinkingIndex = 0;
         bubble.textContent = thinkingFrames[thinkingIndex];
@@ -85,8 +85,6 @@
 
           const ch = chars[index++];
           bubble.textContent += ch;
-
-          // Follow the answer as it grows so the latest text stays visible.
           chatBody.scrollTop = chatBody.scrollHeight;
 
           if (index >= chars.length) {
@@ -101,7 +99,6 @@
           window.setTimeout(tick, delay);
         };
 
-        // Start each chatbot reply after a natural random delay of 3-6 seconds.
         const replyDelay = 3000 + Math.random() * 3000;
         window.setTimeout(() => {
           window.clearInterval(thinkingTimer);
@@ -115,19 +112,15 @@
         }, replyDelay);
       });
 
-      const hidePhoneUntilReplyFinishes = (phone) => {
-        if (!phone || phone.dataset.replyGated === '1') return;
-        phone.dataset.replyGated = '1';
-        phone.style.visibility = 'hidden';
-        phone.style.opacity = '0';
-        phone.style.pointerEvents = 'none';
+      const gateContactActions = (actions) => {
+        if (!actions || actions.dataset.replyGated === '1') return;
+        actions.dataset.replyGated = '1';
+        actions.style.display = 'none';
 
         const queueAtCreation = typeQueue;
         queueAtCreation.then(() => {
-          if (!phone.isConnected) return;
-          phone.style.visibility = '';
-          phone.style.opacity = '';
-          phone.style.pointerEvents = '';
+          if (!actions.isConnected) return;
+          actions.style.display = '';
           chatBody.scrollTop = chatBody.scrollHeight;
         });
       };
@@ -151,15 +144,15 @@
           });
         });
 
-        // Then gate phone display so it only appears after the queued reply completes.
+        // Then hide the complete contact-actions block until that reply finishes.
         mutations.forEach((mutation) => {
           mutation.addedNodes.forEach((node) => {
             if (!(node instanceof Element)) return;
 
-            const phones = [];
-            if (node.matches('a[href^="tel:"]')) phones.push(node);
-            node.querySelectorAll?.('a[href^="tel:"]').forEach((phone) => phones.push(phone));
-            phones.forEach(hidePhoneUntilReplyFinishes);
+            const actionBlocks = [];
+            if (node.matches('.nji-chatbot__actions')) actionBlocks.push(node);
+            node.querySelectorAll?.('.nji-chatbot__actions').forEach((actions) => actionBlocks.push(actions));
+            actionBlocks.forEach(gateContactActions);
           });
         });
       });
