@@ -91,7 +91,25 @@
         window.setTimeout(tick, replyDelay);
       });
 
+      const hidePhoneUntilReplyFinishes = (phone) => {
+        if (!phone || phone.dataset.replyGated === '1') return;
+        phone.dataset.replyGated = '1';
+        phone.style.visibility = 'hidden';
+        phone.style.opacity = '0';
+        phone.style.pointerEvents = 'none';
+
+        const queueAtCreation = typeQueue;
+        queueAtCreation.then(() => {
+          if (!phone.isConnected) return;
+          phone.style.visibility = '';
+          phone.style.opacity = '';
+          phone.style.pointerEvents = '';
+          chatBody.scrollTop = chatBody.scrollHeight;
+        });
+      };
+
       const observer = new MutationObserver((mutations) => {
+        // First queue every newly-added chatbot reply in this mutation batch.
         mutations.forEach((mutation) => {
           mutation.addedNodes.forEach((node) => {
             if (!(node instanceof Element)) return;
@@ -106,6 +124,18 @@
               if (!bubble || bubble.classList.contains('nji-chatbot__typing')) return;
               typeQueue = typeQueue.then(() => typeBubble(bubble));
             });
+          });
+        });
+
+        // Then gate phone display so it only appears after the queued reply completes.
+        mutations.forEach((mutation) => {
+          mutation.addedNodes.forEach((node) => {
+            if (!(node instanceof Element)) return;
+
+            const phones = [];
+            if (node.matches('a[href^="tel:"]')) phones.push(node);
+            node.querySelectorAll?.('a[href^="tel:"]').forEach((phone) => phones.push(phone));
+            phones.forEach(hidePhoneUntilReplyFinishes);
           });
         });
       });
