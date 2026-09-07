@@ -72,17 +72,10 @@
       }
       .nji-chatbot__head{min-height:0!important;background:#fff!important;border-bottom:1px solid #e3e8ef!important;border-radius:22px 22px 0 0}
       .nji-chatbot__body{
-        min-width:0!important;
-        min-height:0!important;
-        height:auto!important;
-        max-height:none!important;
-        overflow-y:auto!important;
-        overflow-x:hidden!important;
-        overscroll-behavior:contain!important;
-        -webkit-overflow-scrolling:touch!important;
-        scroll-behavior:auto!important;
-        touch-action:pan-y!important;
-        pointer-events:auto!important;
+        min-width:0!important;min-height:0!important;height:auto!important;max-height:none!important;
+        overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain!important;
+        -webkit-overflow-scrolling:touch!important;scroll-behavior:auto!important;touch-action:pan-y!important;
+        pointer-events:auto!important;position:relative!important;z-index:2!important;
         background:#fff!important;color:#13243b!important;
       }
       .nji-chatbot__inputbar{min-height:0!important;background:#fff!important;border-top:1px solid #e3e8ef!important}
@@ -96,13 +89,7 @@
         .nji-chatbot{right:14px!important;bottom:14px!important;overflow:visible!important}
         .nji-chatbot__launcher,.nji-chatbot__mascot-stage,.nji-chatbot__mascot-motion{width:98px!important;height:98px!important}
         .nji-chatbot__static-mascot{width:98px!important;height:98px!important;filter:drop-shadow(0 8px 12px rgba(0,0,0,.2))}
-        .nji-chatbot__panel{
-          bottom:120px!important;
-          height:min(620px,calc(100dvh - 140px))!important;
-          max-height:calc(100dvh - 140px)!important;
-          min-height:260px;
-          border-radius:18px!important;
-        }
+        .nji-chatbot__panel{bottom:120px!important;height:min(620px,calc(100dvh - 140px))!important;max-height:calc(100dvh - 140px)!important;min-height:260px;border-radius:18px!important}
         .nji-chatbot__panel::after{right:38px;bottom:-12px;width:24px;height:24px}
         .nji-chatbot__head{border-radius:18px 18px 0 0}.nji-chatbot__foot{border-radius:0 0 18px 18px}.back-to-top{right:126px!important}
       }
@@ -114,6 +101,34 @@
       }
     `;
     document.head.appendChild(style);
+
+    const chatBody = document.querySelector('.nji-chatbot__body');
+    if (chatBody && chatBody.dataset.smoothWheel !== '1') {
+      chatBody.dataset.smoothWheel = '1';
+      let target = chatBody.scrollTop;
+      let raf = 0;
+
+      const animate = () => {
+        const diff = target - chatBody.scrollTop;
+        if (Math.abs(diff) < 0.5) {
+          chatBody.scrollTop = target;
+          raf = 0;
+          return;
+        }
+        chatBody.scrollTop += diff * 0.22;
+        raf = requestAnimationFrame(animate);
+      };
+
+      chatBody.addEventListener('wheel', (event) => {
+        if (event.ctrlKey) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? chatBody.clientHeight : 1;
+        const max = Math.max(0, chatBody.scrollHeight - chatBody.clientHeight);
+        target = Math.max(0, Math.min(max, target + event.deltaY * unit));
+        if (!raf) raf = requestAnimationFrame(animate);
+      }, { passive:false });
+    }
 
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
     let breath = null;
