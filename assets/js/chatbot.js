@@ -58,9 +58,24 @@
         }
 
         const chars = Array.from(fullText);
-        bubble.textContent = '';
-        bubble.setAttribute('aria-label', fullText);
+        bubble.setAttribute('aria-label', '回答を作成中');
         let index = 0;
+
+        // Show ChatGPT-like thinking dots during the 3-6 second reply delay.
+        const thinkingFrames = ['・', '・・', '・・・'];
+        let thinkingIndex = 0;
+        bubble.textContent = thinkingFrames[thinkingIndex];
+        chatBody.scrollTop = chatBody.scrollHeight;
+
+        const thinkingTimer = window.setInterval(() => {
+          if (!bubble.isConnected) {
+            window.clearInterval(thinkingTimer);
+            return;
+          }
+          thinkingIndex = (thinkingIndex + 1) % thinkingFrames.length;
+          bubble.textContent = thinkingFrames[thinkingIndex];
+          chatBody.scrollTop = chatBody.scrollHeight;
+        }, 420);
 
         const tick = () => {
           if (!bubble.isConnected) {
@@ -88,7 +103,16 @@
 
         // Start each chatbot reply after a natural random delay of 3-6 seconds.
         const replyDelay = 3000 + Math.random() * 3000;
-        window.setTimeout(tick, replyDelay);
+        window.setTimeout(() => {
+          window.clearInterval(thinkingTimer);
+          if (!bubble.isConnected) {
+            resolve();
+            return;
+          }
+          bubble.textContent = '';
+          bubble.setAttribute('aria-label', fullText);
+          tick();
+        }, replyDelay);
       });
 
       const hidePhoneUntilReplyFinishes = (phone) => {
