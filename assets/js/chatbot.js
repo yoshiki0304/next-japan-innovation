@@ -30,6 +30,10 @@
         chatBody.scrollTop = chatBody.scrollHeight;
       };
 
+      const keepAtTop = () => {
+        chatBody.scrollTop = 0;
+      };
+
       const prepareStaggerItems = (container, selector) => {
         if (!container || container.dataset.staggerPrepared === '1') return [];
         container.dataset.staggerPrepared = '1';
@@ -43,10 +47,12 @@
         return items;
       };
 
-      const revealStaggerItems = (container, selector) => {
+      const revealStaggerItems = (container, selector, options = {}) => {
         if (!container || !container.isConnected) return;
         const items = Array.from(container.querySelectorAll(selector));
         if (!items.length) return;
+
+        const updateScroll = options.keepTop === true ? keepAtTop : scrollToBottom;
 
         if (reduceTyping.matches) {
           items.forEach((item) => {
@@ -55,7 +61,7 @@
             item.style.transition = '';
             item.style.pointerEvents = '';
           });
-          scrollToBottom();
+          updateScroll();
           return;
         }
 
@@ -65,7 +71,7 @@
             item.style.opacity = '1';
             item.style.transform = 'translateY(0)';
             item.style.pointerEvents = '';
-            scrollToBottom();
+            updateScroll();
           }, index * 135);
         });
       };
@@ -87,12 +93,14 @@
         bubble.dataset.typewriterReady = '1';
         if (!fullText || reduceTyping.matches) {
           bubble.textContent = fullText;
+          if (options.initial === true) keepAtTop();
           resolve();
           return;
         }
 
         const chars = Array.from(fullText);
         let index = 0;
+        const updateScroll = options.initial === true ? keepAtTop : scrollToBottom;
 
         const tick = () => {
           if (!bubble.isConnected) {
@@ -102,10 +110,11 @@
 
           const ch = chars[index++];
           bubble.textContent += ch;
-          scrollToBottom();
+          updateScroll();
 
           if (index >= chars.length) {
             bubble.removeAttribute('aria-label');
+            updateScroll();
             resolve();
             return;
           }
@@ -119,6 +128,7 @@
         if (options.initial === true) {
           bubble.textContent = '';
           bubble.setAttribute('aria-label', fullText);
+          keepAtTop();
           window.setTimeout(tick, 120);
           return;
         }
@@ -189,7 +199,6 @@
         if (bubble !== firstBubble) bubble.dataset.typewriterReady = '1';
       });
 
-      // Keep the initial greeting hidden until the user actually opens the chatbot.
       if (firstBubble && !reduceTyping.matches) {
         firstBubble.textContent = '';
         firstBubble.setAttribute('aria-label', initialGreeting);
@@ -198,6 +207,7 @@
       const startInitialSequence = () => {
         if (initialSequenceStarted || !firstBubble) return;
         initialSequenceStarted = true;
+        keepAtTop();
 
         typeQueue = typeQueue.then(() => typeBubble(firstBubble, {
           initial: true,
@@ -206,7 +216,7 @@
 
         typeQueue.then(() => {
           if (initialChoices?.isConnected) {
-            revealStaggerItems(initialChoices, '.nji-chatbot__choice');
+            revealStaggerItems(initialChoices, '.nji-chatbot__choice', { keepTop: true });
           }
         });
       };
@@ -218,6 +228,7 @@
           const openObserver = new MutationObserver(() => {
             if (!root.classList.contains('is-open')) return;
             openObserver.disconnect();
+            keepAtTop();
             startInitialSequence();
           });
           openObserver.observe(root, { attributes: true, attributeFilter: ['class'] });
