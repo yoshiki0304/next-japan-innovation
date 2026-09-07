@@ -15,6 +15,21 @@
       firstBubble.textContent = 'こんにちは。NJI・chatBOTくんです！\nメニューを選ぶか、下の入力欄から自由に質問してください。';
     }
 
+    const chatBody = document.querySelector('.nji-chatbot__body');
+    if (chatBody && chatBody.dataset.pageWheelForwarding !== '1') {
+      chatBody.dataset.pageWheelForwarding = '1';
+      chatBody.addEventListener('wheel', (event) => {
+        if (event.ctrlKey) return;
+        event.preventDefault();
+        const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? window.innerHeight : 1;
+        window.scrollBy({
+          top: event.deltaY * unit,
+          left: 0,
+          behavior: 'auto'
+        });
+      }, { passive: false });
+    }
+
     if (document.querySelector('script[data-nji-chatbot-mascot]')) return;
     const mascot = document.createElement('script');
     mascot.src = new URL('chatbot-mascot.js?v=3-breathing-only', self.src).href;
