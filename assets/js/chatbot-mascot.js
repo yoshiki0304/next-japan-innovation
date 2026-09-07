@@ -8,16 +8,13 @@
 
     const root = launcher.closest('.nji-chatbot');
 
-    // Remove all previous mascot layers / animation remnants.
     launcher.querySelector('svg')?.remove();
     launcher.querySelectorAll('.nji-chatbot__mascot-stage,.nji-chatbot__launcher-character,.nji-chatbot__idle-fx,.nji-chatbot__part').forEach((el) => el.remove());
 
-    // Position wrapper: fixed layout only. Never animated.
     const stage = document.createElement('span');
     stage.className = 'nji-chatbot__mascot-stage';
     stage.setAttribute('aria-hidden', 'true');
 
-    // Animation wrapper: breathing transform only.
     const motion = document.createElement('span');
     motion.className = 'nji-chatbot__mascot-motion';
 
@@ -49,8 +46,7 @@
       .nji-chatbot__launcher:hover{transform:none!important}
       .nji-chatbot__mascot-stage{
         position:absolute!important;inset:0!important;width:207px!important;height:207px!important;
-        overflow:visible!important;pointer-events:none!important;z-index:2!important;
-        transform:none!important;
+        overflow:visible!important;pointer-events:none!important;z-index:2!important;transform:none!important;
       }
       .nji-chatbot__mascot-motion{
         display:block!important;position:absolute!important;inset:0!important;width:207px!important;height:207px!important;
@@ -68,15 +64,30 @@
         height:min(620px,calc(100dvh - 249px))!important;
         max-height:calc(100dvh - 249px)!important;
         min-height:280px;
+        display:flex!important;
+        flex-direction:column!important;
         background:#fff!important;border:1px solid #dce4ee!important;color:#13243b!important;
-        box-shadow:0 24px 68px rgba(10,31,58,.24)!important;overflow:hidden!important;isolation:isolate;
+        box-shadow:0 24px 68px rgba(10,31,58,.24)!important;
+        overflow:hidden!important;isolation:isolate;
       }
-      .nji-chatbot__body{min-height:0!important;overflow-y:auto!important;overscroll-behavior-y:contain!important}
+      .nji-chatbot__head{flex:0 0 auto!important;background:#fff!important;border-bottom:1px solid #e3e8ef!important;border-radius:22px 22px 0 0}
+      .nji-chatbot__body{
+        flex:1 1 0!important;
+        min-height:0!important;
+        height:auto!important;
+        overflow-y:auto!important;
+        overflow-x:hidden!important;
+        overscroll-behavior-y:contain!important;
+        -webkit-overflow-scrolling:touch;
+        background:#fff!important;color:#13243b!important;
+      }
+      .nji-chatbot__inputbar{flex:0 0 auto!important;background:#fff!important;border-top:1px solid #e3e8ef!important}
+      .nji-chatbot__foot{flex:0 0 auto!important;background:#fff!important;color:#8491a1!important;border-radius:0 0 22px 22px}
       .nji-chatbot__panel::after{content:'';position:absolute;right:72px;bottom:-15px;width:30px;height:30px;background:#fff;border-right:1px solid #dce4ee;border-bottom:1px solid #dce4ee;transform:rotate(45deg);z-index:-1}
-      .nji-chatbot__head{background:#fff!important;border-bottom:1px solid #e3e8ef!important;border-radius:22px 22px 0 0}.nji-chatbot__eyebrow{color:#245fae!important}.nji-chatbot__title{color:#13243b!important}.nji-chatbot__status{color:#6d7b8d!important}
-      .nji-chatbot__close{background:#f1f4f8!important;color:#13243b!important}.nji-chatbot__body{background:#fff!important;color:#13243b!important}.nji-chatbot__bubble{background:#f2f5f9!important;border-color:#e1e7ef!important;color:#1b2d45!important}.nji-chatbot__row.is-user .nji-chatbot__bubble{background:#17365f!important;border-color:#17365f!important;color:#fff!important}
+      .nji-chatbot__eyebrow{color:#245fae!important}.nji-chatbot__title{color:#13243b!important}.nji-chatbot__status{color:#6d7b8d!important}
+      .nji-chatbot__close{background:#f1f4f8!important;color:#13243b!important}.nji-chatbot__bubble{background:#f2f5f9!important;border-color:#e1e7ef!important;color:#1b2d45!important}.nji-chatbot__row.is-user .nji-chatbot__bubble{background:#17365f!important;border-color:#17365f!important;color:#fff!important}
       .nji-chatbot__choice{background:#fff!important;border-color:#bfd0e6!important;color:#18314f!important}.nji-chatbot__choice small{color:#6f7f92!important}.nji-chatbot__action{background:#f2f5f9!important;border-color:#dce4ee!important;color:#17365f!important}.nji-chatbot__action.is-primary{background:#17365f!important;border-color:#17365f!important;color:#fff!important}
-      .nji-chatbot__inputbar{background:#fff!important;border-top:1px solid #e3e8ef!important;flex:0 0 auto!important}.nji-chatbot__input{background:#fff!important;border-color:#cbd6e4!important;color:#13243b!important}.nji-chatbot__send{background:#17365f!important;color:#fff!important}.nji-chatbot__foot{background:#fff!important;color:#8491a1!important;border-radius:0 0 22px 22px;flex:0 0 auto!important}.back-to-top{right:252px!important}
+      .nji-chatbot__input{background:#fff!important;border-color:#cbd6e4!important;color:#13243b!important}.nji-chatbot__send{background:#17365f!important;color:#fff!important}.back-to-top{right:252px!important}
       @media(max-width:640px){
         .nji-chatbot{right:14px!important;bottom:14px!important;overflow:visible!important}
         .nji-chatbot__launcher,.nji-chatbot__mascot-stage,.nji-chatbot__mascot-motion{width:98px!important;height:98px!important}
@@ -104,10 +115,7 @@
     let breath = null;
 
     const stopBreathing = () => {
-      if (breath) {
-        breath.cancel();
-        breath = null;
-      }
+      if (breath) { breath.cancel(); breath = null; }
       motion.style.transform = 'none';
     };
 
@@ -123,22 +131,16 @@
         { transform:'translateY(-0.8px) scaleX(1.003) scaleY(1.007)', offset:0.52 },
         { transform:'translateY(-0.3px) scaleX(1.001) scaleY(1.003)', offset:0.76 },
         { transform:'translateY(0) scaleX(1) scaleY(1)', offset:1 }
-      ], {
-        duration: 3600,
-        iterations: Infinity,
-        easing: 'cubic-bezier(.45,0,.55,1)'
-      });
+      ], { duration:3600, iterations:Infinity, easing:'cubic-bezier(.45,0,.55,1)' });
     };
 
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden) stopBreathing();
-      else startBreathing();
+      if (document.hidden) stopBreathing(); else startBreathing();
     });
 
     if (root) {
       new MutationObserver(() => {
-        if (root.classList.contains('is-open')) stopBreathing();
-        else startBreathing();
+        if (root.classList.contains('is-open')) stopBreathing(); else startBreathing();
       }).observe(root, { attributes:true, attributeFilter:['class'] });
       root.dataset.mascotMode = 'breathing-only';
     }
