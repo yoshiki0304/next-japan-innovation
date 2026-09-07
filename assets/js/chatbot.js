@@ -37,7 +37,7 @@
     if (document.querySelector('script[data-nji-chatbot-mascot]')) return;
 
     const mascot = document.createElement('script');
-    mascot.src = new URL('chatbot-mascot.js?v=3-breathing-only', self.src).href;
+    mascot.src = new URL('chatbot-mascot.js?v=4-viewport-height', self.src).href;
     mascot.async = false;
     mascot.setAttribute('data-nji-chatbot-mascot', '');
     document.head.appendChild(mascot);
