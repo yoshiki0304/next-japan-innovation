@@ -28,6 +28,87 @@
           chatBody.scrollTop = 0;
         });
       });
+
+      // Keep the greeting / already-rendered messages unchanged.
+      chatBody.querySelectorAll('.nji-chatbot__row .nji-chatbot__bubble').forEach((bubble) => {
+        bubble.dataset.typewriterReady = '1';
+      });
+
+      const reduceTyping = window.matchMedia('(prefers-reduced-motion: reduce)');
+      let typeQueue = Promise.resolve();
+
+      const typeBubble = (bubble) => new Promise((resolve) => {
+        if (!bubble || bubble.dataset.typewriterReady === '1') {
+          resolve();
+          return;
+        }
+
+        const row = bubble.closest('.nji-chatbot__row');
+        if (!row || row.classList.contains('is-user') || bubble.classList.contains('nji-chatbot__typing')) {
+          bubble.dataset.typewriterReady = '1';
+          resolve();
+          return;
+        }
+
+        const fullText = bubble.textContent || '';
+        bubble.dataset.typewriterReady = '1';
+        if (!fullText || reduceTyping.matches) {
+          resolve();
+          return;
+        }
+
+        const chars = Array.from(fullText);
+        bubble.textContent = '';
+        bubble.setAttribute('aria-label', fullText);
+        let index = 0;
+
+        const tick = () => {
+          if (!bubble.isConnected) {
+            resolve();
+            return;
+          }
+
+          const ch = chars[index++];
+          bubble.textContent += ch;
+
+          // Follow the answer as it grows so the latest text stays visible.
+          chatBody.scrollTop = chatBody.scrollHeight;
+
+          if (index >= chars.length) {
+            bubble.removeAttribute('aria-label');
+            resolve();
+            return;
+          }
+
+          let delay = 18;
+          if (ch === '、' || ch === ',') delay = 45;
+          if (ch === '。' || ch === '！' || ch === '？' || ch === '!' || ch === '?' || ch === '\n') delay = 85;
+          window.setTimeout(tick, delay);
+        };
+
+        window.setTimeout(tick, 40);
+      });
+
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          mutation.addedNodes.forEach((node) => {
+            if (!(node instanceof Element)) return;
+
+            const rows = [];
+            if (node.matches('.nji-chatbot__row')) rows.push(node);
+            node.querySelectorAll?.('.nji-chatbot__row').forEach((row) => rows.push(row));
+
+            rows.forEach((row) => {
+              if (row.classList.contains('is-user')) return;
+              const bubble = row.querySelector('.nji-chatbot__bubble');
+              if (!bubble || bubble.classList.contains('nji-chatbot__typing')) return;
+              typeQueue = typeQueue.then(() => typeBubble(bubble));
+            });
+          });
+        });
+      });
+
+      observer.observe(chatBody, { childList: true, subtree: true });
     }
 
     if (document.querySelector('script[data-nji-chatbot-mascot]')) return;
