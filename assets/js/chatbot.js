@@ -18,15 +18,11 @@
     }
 
     if (chatBody) {
-      // Do not intercept wheel / trackpad input with JavaScript.
-      // Let Chrome / Safari handle speed, inertia and acceleration natively.
       chatBody.style.overflowY = 'auto';
       chatBody.style.overscrollBehaviorY = 'contain';
       chatBody.style.webkitOverflowScrolling = 'touch';
       chatBody.style.scrollBehavior = 'auto';
 
-      // Core scrolls to the bottom while building the initial menu.
-      // Restore the greeting to the top after initialization.
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           chatBody.scrollTop = 0;
@@ -37,7 +33,7 @@
     if (document.querySelector('script[data-nji-chatbot-mascot]')) return;
 
     const mascot = document.createElement('script');
-    mascot.src = new URL('chatbot-mascot.js?v=4-viewport-height', self.src).href;
+    mascot.src = new URL('chatbot-mascot.js?v=5-grid-scroll', self.src).href;
     mascot.async = false;
     mascot.setAttribute('data-nji-chatbot-mascot', '');
     document.head.appendChild(mascot);
