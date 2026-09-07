@@ -64,28 +64,29 @@
         height:min(620px,calc(100dvh - 249px))!important;
         max-height:calc(100dvh - 249px)!important;
         min-height:280px;
-        display:flex!important;
-        flex-direction:column!important;
+        display:grid!important;
+        grid-template-rows:auto minmax(0,1fr) auto auto!important;
         background:#fff!important;border:1px solid #dce4ee!important;color:#13243b!important;
         box-shadow:0 24px 68px rgba(10,31,58,.24)!important;
         overflow:hidden!important;isolation:isolate;
       }
-      .nji-chatbot__head{flex:0 0 auto!important;background:#fff!important;border-bottom:1px solid #e3e8ef!important;border-radius:22px 22px 0 0}
+      .nji-chatbot__head{min-height:0!important;background:#fff!important;border-bottom:1px solid #e3e8ef!important;border-radius:22px 22px 0 0}
       .nji-chatbot__body{
-        flex:1 1 0!important;
+        min-width:0!important;
         min-height:0!important;
-        height:0!important;
+        height:auto!important;
+        max-height:none!important;
         overflow-y:auto!important;
         overflow-x:hidden!important;
-        overscroll-behavior-y:contain!important;
+        overscroll-behavior:contain!important;
         -webkit-overflow-scrolling:touch!important;
         scroll-behavior:auto!important;
         touch-action:pan-y!important;
         pointer-events:auto!important;
         background:#fff!important;color:#13243b!important;
       }
-      .nji-chatbot__inputbar{flex:0 0 auto!important;background:#fff!important;border-top:1px solid #e3e8ef!important}
-      .nji-chatbot__foot{flex:0 0 auto!important;background:#fff!important;color:#8491a1!important;border-radius:0 0 22px 22px}
+      .nji-chatbot__inputbar{min-height:0!important;background:#fff!important;border-top:1px solid #e3e8ef!important}
+      .nji-chatbot__foot{min-height:0!important;background:#fff!important;color:#8491a1!important;border-radius:0 0 22px 22px}
       .nji-chatbot__panel::after{content:'';position:absolute;right:72px;bottom:-15px;width:30px;height:30px;background:#fff;border-right:1px solid #dce4ee;border-bottom:1px solid #dce4ee;transform:rotate(45deg);z-index:-1}
       .nji-chatbot__eyebrow{color:#245fae!important}.nji-chatbot__title{color:#13243b!important}.nji-chatbot__status{color:#6d7b8d!important}
       .nji-chatbot__close{background:#f1f4f8!important;color:#13243b!important}.nji-chatbot__bubble{background:#f2f5f9!important;border-color:#e1e7ef!important;color:#1b2d45!important}.nji-chatbot__row.is-user .nji-chatbot__bubble{background:#17365f!important;border-color:#17365f!important;color:#fff!important}
