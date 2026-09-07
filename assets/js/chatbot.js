@@ -8,10 +8,12 @@
 
   const setupAfterCoreLoad = () => {
     const chatBody = document.querySelector('.nji-chatbot__body');
+    const root = document.querySelector('[data-nji-chatbot]');
     const firstBubble = chatBody?.querySelector('.nji-chatbot__bubble');
+    const initialGreeting = 'こんにちは。NJI・chatBOTくんです！\nメニューを選ぶか、下の入力欄から自由に質問してください。';
 
     if (firstBubble) {
-      firstBubble.textContent = 'こんにちは。NJI・chatBOTくんです！\nメニューを選ぶか、下の入力欄から自由に質問してください。';
+      firstBubble.textContent = initialGreeting;
     }
 
     if (chatBody) {
@@ -22,6 +24,7 @@
 
       const reduceTyping = window.matchMedia('(prefers-reduced-motion: reduce)');
       let typeQueue = Promise.resolve();
+      let initialSequenceStarted = false;
 
       const scrollToBottom = () => {
         chatBody.scrollTop = chatBody.scrollHeight;
@@ -80,9 +83,10 @@
           return;
         }
 
-        const fullText = bubble.textContent || '';
+        const fullText = options.fullText || bubble.textContent || '';
         bubble.dataset.typewriterReady = '1';
         if (!fullText || reduceTyping.matches) {
+          bubble.textContent = fullText;
           resolve();
           return;
         }
@@ -185,13 +189,41 @@
         if (bubble !== firstBubble) bubble.dataset.typewriterReady = '1';
       });
 
-      if (firstBubble) {
-        typeQueue = typeQueue.then(() => typeBubble(firstBubble, { initial: true }));
+      // Keep the initial greeting hidden until the user actually opens the chatbot.
+      if (firstBubble && !reduceTyping.matches) {
+        firstBubble.textContent = '';
+        firstBubble.setAttribute('aria-label', initialGreeting);
+      }
+
+      const startInitialSequence = () => {
+        if (initialSequenceStarted || !firstBubble) return;
+        initialSequenceStarted = true;
+
+        typeQueue = typeQueue.then(() => typeBubble(firstBubble, {
+          initial: true,
+          fullText: initialGreeting
+        }));
+
         typeQueue.then(() => {
           if (initialChoices?.isConnected) {
             revealStaggerItems(initialChoices, '.nji-chatbot__choice');
           }
         });
+      };
+
+      if (root) {
+        if (root.classList.contains('is-open')) {
+          startInitialSequence();
+        } else {
+          const openObserver = new MutationObserver(() => {
+            if (!root.classList.contains('is-open')) return;
+            openObserver.disconnect();
+            startInitialSequence();
+          });
+          openObserver.observe(root, { attributes: true, attributeFilter: ['class'] });
+        }
+      } else {
+        startInitialSequence();
       }
 
       const observer = new MutationObserver((mutations) => {
