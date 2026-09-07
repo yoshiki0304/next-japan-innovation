@@ -25,14 +25,54 @@
       const reduceTyping = window.matchMedia('(prefers-reduced-motion: reduce)');
       let typeQueue = Promise.resolve();
       let initialSequenceStarted = false;
+      let manualScrollLock = false;
 
-      const scrollToBottom = () => {
+      const distanceFromBottom = () => Math.max(0, chatBody.scrollHeight - chatBody.clientHeight - chatBody.scrollTop);
+      const isNearBottom = () => distanceFromBottom() <= 42;
+
+      const scrollToBottom = (force = false) => {
+        if (manualScrollLock && !force) return;
         chatBody.scrollTop = chatBody.scrollHeight;
       };
 
       const keepAtTop = () => {
         chatBody.scrollTop = 0;
       };
+
+      // If the user scrolls upward while a reply is being typed, stop automatic
+      // bottom-following immediately. Resume only after they return to the bottom.
+      chatBody.addEventListener('wheel', (event) => {
+        if (event.ctrlKey) return;
+        if (event.deltaY < 0) {
+          manualScrollLock = true;
+          chatBody.dataset.manualScrollLock = '1';
+          return;
+        }
+
+        if (event.deltaY > 0 && manualScrollLock) {
+          window.setTimeout(() => {
+            if (!isNearBottom()) return;
+            manualScrollLock = false;
+            delete chatBody.dataset.manualScrollLock;
+          }, 180);
+        }
+      }, { passive: true, capture: true });
+
+      chatBody.addEventListener('scroll', () => {
+        if (!manualScrollLock || !isNearBottom()) return;
+        manualScrollLock = false;
+        delete chatBody.dataset.manualScrollLock;
+      }, { passive: true });
+
+      // A deliberate menu/action click starts a new answer, so following the newest
+      // content is wanted again even if the user had previously scrolled upward.
+      chatBody.addEventListener('click', (event) => {
+        const interactive = event.target.closest('.nji-chatbot__choice,.nji-chatbot__action');
+        if (!interactive || !chatBody.contains(interactive)) return;
+        manualScrollLock = false;
+        delete chatBody.dataset.manualScrollLock;
+        scrollToBottom(true);
+      }, true);
 
       const prepareStaggerItems = (container, selector) => {
         if (!container || container.dataset.staggerPrepared === '1') return [];
