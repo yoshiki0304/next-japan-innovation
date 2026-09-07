@@ -109,6 +109,8 @@
       let raf = 0;
 
       const animate = () => {
+        const max = Math.max(0, chatBody.scrollHeight - chatBody.clientHeight);
+        target = Math.max(0, Math.min(max, target));
         const diff = target - chatBody.scrollTop;
         if (Math.abs(diff) < 0.5) {
           chatBody.scrollTop = target;
@@ -117,6 +119,15 @@
         }
         chatBody.scrollTop += diff * 0.22;
         raf = requestAnimationFrame(animate);
+      };
+
+      const scrollToLatest = () => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            target = Math.max(0, chatBody.scrollHeight - chatBody.clientHeight);
+            if (!raf) raf = requestAnimationFrame(animate);
+          });
+        });
       };
 
       chatBody.addEventListener('wheel', (event) => {
@@ -128,6 +139,12 @@
         target = Math.max(0, Math.min(max, target + event.deltaY * unit));
         if (!raf) raf = requestAnimationFrame(animate);
       }, { passive:false });
+
+      chatBody.addEventListener('click', (event) => {
+        const menuButton = event.target.closest('.nji-chatbot__choice,.nji-chatbot__action');
+        if (!menuButton || !chatBody.contains(menuButton)) return;
+        scrollToLatest();
+      });
     }
 
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
