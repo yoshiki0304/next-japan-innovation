@@ -15,19 +15,28 @@
       firstBubble.textContent = 'こんにちは。NJI・chatBOTくんです！\nメニューを選ぶか、下の入力欄から自由に質問してください。';
     }
 
-    const chatBody = document.querySelector('.nji-chatbot__body');
-    if (chatBody && chatBody.dataset.pageWheelForwarding !== '1') {
-      chatBody.dataset.pageWheelForwarding = '1';
-      chatBody.addEventListener('wheel', (event) => {
+    // Always forward wheel / trackpad scrolling from the entire chatbot panel
+    // to the main page instead of letting the chatbot consume it.
+    const panel = document.querySelector('.nji-chatbot__panel');
+    if (panel && panel.dataset.pageWheelForwarding !== '1') {
+      panel.dataset.pageWheelForwarding = '1';
+      panel.addEventListener('wheel', (event) => {
         if (event.ctrlKey) return;
         event.preventDefault();
-        const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? window.innerHeight : 1;
-        window.scrollBy({
-          top: event.deltaY * unit,
-          left: 0,
-          behavior: 'auto'
-        });
-      }, { passive: false });
+        event.stopPropagation();
+
+        const unit = event.deltaMode === 1
+          ? 16
+          : event.deltaMode === 2
+            ? window.innerHeight
+            : 1;
+        const delta = event.deltaY * unit;
+        const scrollingElement = document.scrollingElement || document.documentElement;
+
+        if (scrollingElement) {
+          scrollingElement.scrollTop += delta;
+        }
+      }, { passive: false, capture: true });
     }
 
     if (document.querySelector('script[data-nji-chatbot-mascot]')) return;
