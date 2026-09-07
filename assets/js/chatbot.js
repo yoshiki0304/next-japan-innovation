@@ -17,14 +17,23 @@
     }
 
     const panel = document.querySelector('.nji-chatbot__panel');
-    if (panel && chatBody && panel.dataset.chatWheelScrolling !== '1') {
-      panel.dataset.chatWheelScrolling = '1';
-      chatBody.style.overscrollBehavior = 'contain';
+    if (panel && chatBody && panel.dataset.chatWheelScrolling !== '2') {
+      panel.dataset.chatWheelScrolling = '2';
 
-      // While the cursor is anywhere over the chatbot panel, scroll the
-      // chatbot message area itself. Do not move the underlying page.
+      // Keep scrolling inside the chatbot while the pointer is over it,
+      // but let the browser handle scrolling natively whenever possible.
+      chatBody.style.overscrollBehavior = 'contain';
+      chatBody.style.webkitOverflowScrolling = 'touch';
+
       panel.addEventListener('wheel', (event) => {
         if (event.ctrlKey) return;
+
+        // If the pointer is already over the scrollable message area,
+        // do nothing: native wheel / trackpad inertia handles it naturally.
+        if (chatBody.contains(event.target)) return;
+
+        // Header / input / footer: redirect the raw wheel delta to the
+        // message area without modifying acceleration or easing.
         event.preventDefault();
         event.stopPropagation();
 
@@ -34,7 +43,11 @@
             ? chatBody.clientHeight
             : 1;
 
-        chatBody.scrollTop += event.deltaY * unit;
+        chatBody.scrollBy({
+          top: event.deltaY * unit,
+          left: 0,
+          behavior: 'auto'
+        });
       }, { passive: false, capture: true });
     }
 
