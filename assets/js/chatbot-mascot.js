@@ -74,11 +74,14 @@
       .nji-chatbot__body{
         flex:1 1 0!important;
         min-height:0!important;
-        height:auto!important;
+        height:0!important;
         overflow-y:auto!important;
         overflow-x:hidden!important;
         overscroll-behavior-y:contain!important;
-        -webkit-overflow-scrolling:touch;
+        -webkit-overflow-scrolling:touch!important;
+        scroll-behavior:auto!important;
+        touch-action:pan-y!important;
+        pointer-events:auto!important;
         background:#fff!important;color:#13243b!important;
       }
       .nji-chatbot__inputbar{flex:0 0 auto!important;background:#fff!important;border-top:1px solid #e3e8ef!important}
