@@ -10,16 +10,19 @@
   core.setAttribute('data-nji-chatbot-core', '');
 
   core.addEventListener('load', () => {
-    const firstBubble = document.querySelector('.nji-chatbot__body .nji-chatbot__bubble');
+    const chatBody = document.querySelector('.nji-chatbot__body');
+    const firstBubble = chatBody?.querySelector('.nji-chatbot__bubble');
     if (firstBubble) {
       firstBubble.textContent = 'こんにちは。NJI・chatBOTくんです！\nメニューを選ぶか、下の入力欄から自由に質問してください。';
     }
 
-    // Always forward wheel / trackpad scrolling from the entire chatbot panel
-    // to the main page instead of letting the chatbot consume it.
     const panel = document.querySelector('.nji-chatbot__panel');
-    if (panel && panel.dataset.pageWheelForwarding !== '1') {
-      panel.dataset.pageWheelForwarding = '1';
+    if (panel && chatBody && panel.dataset.chatWheelScrolling !== '1') {
+      panel.dataset.chatWheelScrolling = '1';
+      chatBody.style.overscrollBehavior = 'contain';
+
+      // While the cursor is anywhere over the chatbot panel, scroll the
+      // chatbot message area itself. Do not move the underlying page.
       panel.addEventListener('wheel', (event) => {
         if (event.ctrlKey) return;
         event.preventDefault();
@@ -28,15 +31,21 @@
         const unit = event.deltaMode === 1
           ? 16
           : event.deltaMode === 2
-            ? window.innerHeight
+            ? chatBody.clientHeight
             : 1;
-        const delta = event.deltaY * unit;
-        const scrollingElement = document.scrollingElement || document.documentElement;
 
-        if (scrollingElement) {
-          scrollingElement.scrollTop += delta;
-        }
+        chatBody.scrollTop += event.deltaY * unit;
       }, { passive: false, capture: true });
+    }
+
+    // Core appends the menu and scrolls to the bottom while initializing.
+    // Restore the initial view so the greeting is visible when first opened.
+    if (chatBody) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          chatBody.scrollTop = 0;
+        });
+      });
     }
 
     if (document.querySelector('script[data-nji-chatbot-mascot]')) return;
