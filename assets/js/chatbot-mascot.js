@@ -107,6 +107,9 @@
       chatBody.dataset.smoothWheel = '1';
       let target = chatBody.scrollTop;
       let raf = 0;
+      let followLatest = false;
+      let followStopTimer = 0;
+      let followHardStopTimer = 0;
 
       const animate = () => {
         const max = Math.max(0, chatBody.scrollHeight - chatBody.clientHeight);
@@ -122,16 +125,40 @@
       };
 
       const scrollToLatest = () => {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            target = Math.max(0, chatBody.scrollHeight - chatBody.clientHeight);
-            if (!raf) raf = requestAnimationFrame(animate);
-          });
-        });
+        target = Math.max(0, chatBody.scrollHeight - chatBody.clientHeight);
+        if (!raf) raf = requestAnimationFrame(animate);
       };
+
+      const stopFollowingLatest = () => {
+        followLatest = false;
+        if (followStopTimer) clearTimeout(followStopTimer);
+        if (followHardStopTimer) clearTimeout(followHardStopTimer);
+        followStopTimer = 0;
+        followHardStopTimer = 0;
+      };
+
+      const keepFollowingLatest = () => {
+        if (!followLatest) return;
+        scrollToLatest();
+        if (followStopTimer) clearTimeout(followStopTimer);
+        followStopTimer = setTimeout(stopFollowingLatest, 900);
+      };
+
+      const startFollowingLatest = () => {
+        stopFollowingLatest();
+        followLatest = true;
+        scrollToLatest();
+        followStopTimer = setTimeout(stopFollowingLatest, 900);
+        followHardStopTimer = setTimeout(stopFollowingLatest, 8000);
+      };
+
+      new MutationObserver(() => {
+        if (followLatest) keepFollowingLatest();
+      }).observe(chatBody, { childList:true, subtree:true, characterData:true });
 
       chatBody.addEventListener('wheel', (event) => {
         if (event.ctrlKey) return;
+        stopFollowingLatest();
         event.preventDefault();
         event.stopPropagation();
         const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? chatBody.clientHeight : 1;
@@ -143,7 +170,11 @@
       chatBody.addEventListener('click', (event) => {
         const menuButton = event.target.closest('.nji-chatbot__choice,.nji-chatbot__action');
         if (!menuButton || !chatBody.contains(menuButton)) return;
-        scrollToLatest();
+        startFollowingLatest();
+        requestAnimationFrame(scrollToLatest);
+        setTimeout(scrollToLatest, 50);
+        setTimeout(scrollToLatest, 150);
+        setTimeout(scrollToLatest, 350);
       });
     }
 
