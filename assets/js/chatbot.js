@@ -86,7 +86,9 @@
           window.setTimeout(tick, delay);
         };
 
-        window.setTimeout(tick, 40);
+        // Start each chatbot reply after a natural random delay of 3-6 seconds.
+        const replyDelay = 3000 + Math.random() * 3000;
+        window.setTimeout(tick, replyDelay);
       });
 
       const observer = new MutationObserver((mutations) => {
