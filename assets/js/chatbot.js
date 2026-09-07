@@ -20,20 +20,54 @@
       chatBody.style.webkitOverflowScrolling = 'touch';
       chatBody.style.scrollBehavior = 'auto';
 
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          chatBody.scrollTop = 0;
-        });
-      });
-
-      chatBody.querySelectorAll('.nji-chatbot__row .nji-chatbot__bubble').forEach((bubble) => {
-        bubble.dataset.typewriterReady = '1';
-      });
-
       const reduceTyping = window.matchMedia('(prefers-reduced-motion: reduce)');
       let typeQueue = Promise.resolve();
 
-      const typeBubble = (bubble) => new Promise((resolve) => {
+      const scrollToBottom = () => {
+        chatBody.scrollTop = chatBody.scrollHeight;
+      };
+
+      const prepareStaggerItems = (container, selector) => {
+        if (!container || container.dataset.staggerPrepared === '1') return [];
+        container.dataset.staggerPrepared = '1';
+        const items = Array.from(container.querySelectorAll(selector));
+        items.forEach((item) => {
+          item.style.opacity = '0';
+          item.style.transform = 'translateY(10px)';
+          item.style.transition = 'opacity .42s ease, transform .42s ease';
+          item.style.pointerEvents = 'none';
+        });
+        return items;
+      };
+
+      const revealStaggerItems = (container, selector) => {
+        if (!container || !container.isConnected) return;
+        const items = Array.from(container.querySelectorAll(selector));
+        if (!items.length) return;
+
+        if (reduceTyping.matches) {
+          items.forEach((item) => {
+            item.style.opacity = '';
+            item.style.transform = '';
+            item.style.transition = '';
+            item.style.pointerEvents = '';
+          });
+          scrollToBottom();
+          return;
+        }
+
+        items.forEach((item, index) => {
+          window.setTimeout(() => {
+            if (!item.isConnected) return;
+            item.style.opacity = '1';
+            item.style.transform = 'translateY(0)';
+            item.style.pointerEvents = '';
+            scrollToBottom();
+          }, index * 135);
+        });
+      };
+
+      const typeBubble = (bubble, options = {}) => new Promise((resolve) => {
         if (!bubble || bubble.dataset.typewriterReady === '1') {
           resolve();
           return;
@@ -54,23 +88,7 @@
         }
 
         const chars = Array.from(fullText);
-        bubble.setAttribute('aria-label', '回答を作成中');
         let index = 0;
-
-        const thinkingFrames = ['・', '・・', '・・・'];
-        let thinkingIndex = 0;
-        bubble.textContent = thinkingFrames[thinkingIndex];
-        chatBody.scrollTop = chatBody.scrollHeight;
-
-        const thinkingTimer = window.setInterval(() => {
-          if (!bubble.isConnected) {
-            window.clearInterval(thinkingTimer);
-            return;
-          }
-          thinkingIndex = (thinkingIndex + 1) % thinkingFrames.length;
-          bubble.textContent = thinkingFrames[thinkingIndex];
-          chatBody.scrollTop = chatBody.scrollHeight;
-        }, 420);
 
         const tick = () => {
           if (!bubble.isConnected) {
@@ -80,7 +98,7 @@
 
           const ch = chars[index++];
           bubble.textContent += ch;
-          chatBody.scrollTop = chatBody.scrollHeight;
+          scrollToBottom();
 
           if (index >= chars.length) {
             bubble.removeAttribute('aria-label');
@@ -93,6 +111,29 @@
           if (ch === '。' || ch === '！' || ch === '？' || ch === '!' || ch === '?' || ch === '\n') delay = 85;
           window.setTimeout(tick, delay);
         };
+
+        if (options.initial === true) {
+          bubble.textContent = '';
+          bubble.setAttribute('aria-label', fullText);
+          window.setTimeout(tick, 120);
+          return;
+        }
+
+        const thinkingFrames = ['・', '・・', '・・・'];
+        let thinkingIndex = 0;
+        bubble.textContent = thinkingFrames[thinkingIndex];
+        bubble.setAttribute('aria-label', '回答を作成中');
+        scrollToBottom();
+
+        const thinkingTimer = window.setInterval(() => {
+          if (!bubble.isConnected) {
+            window.clearInterval(thinkingTimer);
+            return;
+          }
+          thinkingIndex = (thinkingIndex + 1) % thinkingFrames.length;
+          bubble.textContent = thinkingFrames[thinkingIndex];
+          scrollToBottom();
+        }, 420);
 
         const replyDelay = 3000 + Math.random() * 3000;
         window.setTimeout(() => {
@@ -107,18 +148,51 @@
         }, replyDelay);
       });
 
+      const gateChoices = (choices) => {
+        if (!choices || choices.dataset.replyGated === '1') return;
+        choices.dataset.replyGated = '1';
+        prepareStaggerItems(choices, '.nji-chatbot__choice');
+        const queueAtCreation = typeQueue;
+        queueAtCreation.then(() => {
+          if (!choices.isConnected) return;
+          revealStaggerItems(choices, '.nji-chatbot__choice');
+        });
+      };
+
       const gateContactActions = (actions) => {
         if (!actions || actions.dataset.replyGated === '1') return;
         actions.dataset.replyGated = '1';
         actions.style.display = 'none';
+        prepareStaggerItems(actions, '.nji-chatbot__action');
 
         const queueAtCreation = typeQueue;
         queueAtCreation.then(() => {
           if (!actions.isConnected) return;
           actions.style.display = '';
-          chatBody.scrollTop = chatBody.scrollHeight;
+          requestAnimationFrame(() => {
+            revealStaggerItems(actions, '.nji-chatbot__action');
+          });
         });
       };
+
+      const initialChoices = chatBody.querySelector('.nji-chatbot__choices');
+      if (initialChoices) {
+        initialChoices.dataset.replyGated = '1';
+        prepareStaggerItems(initialChoices, '.nji-chatbot__choice');
+      }
+
+      chatBody.querySelectorAll('.nji-chatbot__row .nji-chatbot__bubble').forEach((bubble) => {
+        if (bubble !== firstBubble) bubble.dataset.typewriterReady = '1';
+      });
+
+      if (firstBubble) {
+        typeQueue = typeQueue.then(() => typeBubble(firstBubble, { initial: true }));
+        typeQueue.then(() => {
+          if (initialChoices?.isConnected) {
+            revealStaggerItems(initialChoices, '.nji-chatbot__choice');
+          }
+        });
+      }
 
       const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
@@ -142,6 +216,11 @@
           mutation.addedNodes.forEach((node) => {
             if (!(node instanceof Element)) return;
 
+            const choiceBlocks = [];
+            if (node.matches('.nji-chatbot__choices')) choiceBlocks.push(node);
+            node.querySelectorAll?.('.nji-chatbot__choices').forEach((choices) => choiceBlocks.push(choices));
+            choiceBlocks.forEach(gateChoices);
+
             const actionBlocks = [];
             if (node.matches('.nji-chatbot__actions')) actionBlocks.push(node);
             node.querySelectorAll?.('.nji-chatbot__actions').forEach((actions) => actionBlocks.push(actions));
@@ -151,6 +230,12 @@
       });
 
       observer.observe(chatBody, { childList: true, subtree: true });
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          chatBody.scrollTop = 0;
+        });
+      });
     }
 
     if (!document.querySelector('script[data-nji-chatbot-mascot]')) {
