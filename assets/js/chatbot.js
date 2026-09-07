@@ -2,14 +2,11 @@
   'use strict';
 
   const self = document.currentScript;
-  if (!self || document.querySelector('script[data-nji-chatbot-core]')) return;
+  if (!self) return;
+  const baseSrc = self.src;
+  let resetting = false;
 
-  const core = document.createElement('script');
-  core.src = new URL('chatbot-core.js?v=8-white-speech-bubble', self.src).href;
-  core.async = false;
-  core.setAttribute('data-nji-chatbot-core', '');
-
-  core.addEventListener('load', () => {
+  const setupAfterCoreLoad = () => {
     const chatBody = document.querySelector('.nji-chatbot__body');
     const firstBubble = chatBody?.querySelector('.nji-chatbot__bubble');
 
@@ -29,7 +26,6 @@
         });
       });
 
-      // Keep the greeting / already-rendered messages unchanged.
       chatBody.querySelectorAll('.nji-chatbot__row .nji-chatbot__bubble').forEach((bubble) => {
         bubble.dataset.typewriterReady = '1';
       });
@@ -61,7 +57,6 @@
         bubble.setAttribute('aria-label', '回答を作成中');
         let index = 0;
 
-        // Show thinking dots during the 3-6 second reply delay.
         const thinkingFrames = ['・', '・・', '・・・'];
         let thinkingIndex = 0;
         bubble.textContent = thinkingFrames[thinkingIndex];
@@ -126,7 +121,6 @@
       };
 
       const observer = new MutationObserver((mutations) => {
-        // First queue every newly-added chatbot reply in this mutation batch.
         mutations.forEach((mutation) => {
           mutation.addedNodes.forEach((node) => {
             if (!(node instanceof Element)) return;
@@ -144,7 +138,6 @@
           });
         });
 
-        // Then hide the complete contact-actions block until that reply finishes.
         mutations.forEach((mutation) => {
           mutation.addedNodes.forEach((node) => {
             if (!(node instanceof Element)) return;
@@ -160,14 +153,44 @@
       observer.observe(chatBody, { childList: true, subtree: true });
     }
 
-    if (document.querySelector('script[data-nji-chatbot-mascot]')) return;
+    if (!document.querySelector('script[data-nji-chatbot-mascot]')) {
+      const mascot = document.createElement('script');
+      mascot.src = new URL('chatbot-mascot.js?v=5-grid-scroll', baseSrc).href;
+      mascot.async = false;
+      mascot.setAttribute('data-nji-chatbot-mascot', '');
+      document.head.appendChild(mascot);
+    }
+  };
 
-    const mascot = document.createElement('script');
-    mascot.src = new URL('chatbot-mascot.js?v=5-grid-scroll', self.src).href;
-    mascot.async = false;
-    mascot.setAttribute('data-nji-chatbot-mascot', '');
-    document.head.appendChild(mascot);
-  });
+  const bootChatbot = () => {
+    if (document.querySelector('script[data-nji-chatbot-core]') || document.querySelector('[data-nji-chatbot]')) return;
 
-  document.head.appendChild(core);
+    const core = document.createElement('script');
+    core.src = new URL('chatbot-core.js?v=8-white-speech-bubble', baseSrc).href;
+    core.async = false;
+    core.setAttribute('data-nji-chatbot-core', '');
+    core.addEventListener('load', setupAfterCoreLoad, { once: true });
+    document.head.appendChild(core);
+  };
+
+  const resetChatbot = () => {
+    if (resetting) return;
+    resetting = true;
+
+    window.setTimeout(() => {
+      document.querySelector('[data-nji-chatbot]')?.remove();
+      document.querySelector('script[data-nji-chatbot-mascot]')?.remove();
+      document.querySelector('script[data-nji-chatbot-core]')?.remove();
+      document.querySelector('style[data-nji-chatbot-character-style]')?.remove();
+
+      resetting = false;
+      bootChatbot();
+    }, 230);
+  };
+
+  document.addEventListener('click', (event) => {
+    if (event.target.closest('.nji-chatbot__close')) resetChatbot();
+  }, true);
+
+  bootChatbot();
 })();
