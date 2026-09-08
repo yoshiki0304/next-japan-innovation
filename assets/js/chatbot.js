@@ -6,6 +6,31 @@
   const baseSrc = self.src;
   let resetting = false;
 
+  // Capture structured UI instructions returned by chat-api.php without changing
+  // the stable chatbot core. The core still owns normal conversation rendering.
+  if (!window.__njiChatbotFetchMetaPatched && typeof window.fetch === 'function') {
+    window.__njiChatbotFetchMetaPatched = true;
+    const nativeFetch = window.fetch.bind(window);
+    window.fetch = async (...args) => {
+      const response = await nativeFetch(...args);
+      try {
+        const requestUrl = typeof args[0] === 'string' ? args[0] : (args[0]?.url || '');
+        if (/chat-api\.php(?:$|[?#])/i.test(requestUrl)) {
+          response.clone().json().then((data) => {
+            if (!data || data.ok !== true) return;
+            document.dispatchEvent(new CustomEvent('nji:chatbot-ai-meta', {
+              detail: {
+                action: typeof data.action === 'string' ? data.action : 'none',
+                pendingIntent: typeof data.pending_intent === 'string' ? data.pending_intent : ''
+              }
+            }));
+          }).catch(() => {});
+        }
+      } catch (_) {}
+      return response;
+    };
+  }
+
   const setupAfterCoreLoad = () => {
     const chatBody = document.querySelector('.nji-chatbot__body');
     const root = document.querySelector('[data-nji-chatbot]');
@@ -26,6 +51,8 @@
       let typeQueue = Promise.resolve();
       let initialSequenceStarted = false;
       let manualScrollLock = false;
+      let pendingServiceIntent = '';
+      let pendingServiceMenuTimer = 0;
 
       const distanceFromBottom = () => Math.max(0, chatBody.scrollHeight - chatBody.clientHeight - chatBody.scrollTop);
       const isNearBottom = () => distanceFromBottom() <= 42;
@@ -38,6 +65,80 @@
       const keepAtTop = () => {
         chatBody.scrollTop = 0;
       };
+
+      const serviceIntentItems = [
+        { label: 'ホームページ制作', queryName: 'ホームページ制作' },
+        { label: 'AIチャットボットくん', queryName: 'AIチャットボットくん' },
+        { label: 'SNS・MEO支援', queryName: 'SNS・MEO支援' },
+        { label: 'AI・業務効率化', queryName: 'AI・業務効率化' },
+        { label: '店舗型予約ツール', queryName: '店舗型予約ツール' },
+        { label: '店舗公式アプリ', queryName: '店舗公式アプリ' },
+        { label: 'ネットワークカメラ', queryName: 'ネットワークカメラ' },
+        { label: '有料職業紹介', queryName: '有料職業紹介' },
+        { label: '採用について', queryName: '採用' },
+        { label: '代理店募集について', queryName: '代理店募集' }
+      ];
+
+      const submitServiceIntent = (item, intent, button) => {
+        const form = root?.querySelector('.nji-chatbot__inputbar');
+        const input = root?.querySelector('.nji-chatbot__input');
+        if (!form || !input) return;
+
+        const wrap = button?.closest('.nji-chatbot__choices');
+        if (wrap) {
+          wrap.querySelectorAll('button').forEach((btn) => { btn.disabled = true; });
+        }
+
+        input.value = `${item.queryName}の${intent || '詳細'}について教えてください。`;
+        form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+
+        // The core stores the full contextual sentence in AI history, while the
+        // visible user bubble stays natural and simply shows the selected service.
+        requestAnimationFrame(() => {
+          const userRows = chatBody.querySelectorAll('.nji-chatbot__row.is-user');
+          const lastRow = userRows[userRows.length - 1];
+          const bubble = lastRow?.querySelector('.nji-chatbot__bubble');
+          if (bubble) bubble.textContent = item.label;
+        });
+      };
+
+      const appendServiceIntentMenu = (intent) => {
+        if (!intent || !chatBody.isConnected) return;
+        if (chatBody.querySelector('.nji-chatbot__choices[data-context-intent-menu="1"]')) return;
+
+        const wrap = document.createElement('div');
+        wrap.className = 'nji-chatbot__choices';
+        wrap.dataset.contextIntentMenu = '1';
+        wrap.dataset.intent = intent;
+
+        serviceIntentItems.forEach((item) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'nji-chatbot__choice';
+          btn.innerHTML = `<strong>${item.label}</strong>`;
+          btn.addEventListener('click', () => submitServiceIntent(item, intent, btn));
+          wrap.appendChild(btn);
+        });
+
+        chatBody.appendChild(wrap);
+        scrollToBottom();
+      };
+
+      const handleAiMeta = (event) => {
+        const detail = event?.detail || {};
+        if (detail.action !== 'show_service_menu') return;
+        const intent = String(detail.pendingIntent || 'ご相談内容').trim();
+        pendingServiceIntent = intent;
+        window.clearTimeout(pendingServiceMenuTimer);
+        pendingServiceMenuTimer = window.setTimeout(() => {
+          if (!pendingServiceIntent) return;
+          const currentIntent = pendingServiceIntent;
+          pendingServiceIntent = '';
+          appendServiceIntentMenu(currentIntent);
+        }, 140);
+      };
+
+      document.addEventListener('nji:chatbot-ai-meta', handleAiMeta);
 
       // If the user scrolls upward while a reply is being typed, stop automatic
       // bottom-following immediately. Resume only after they return to the bottom.
@@ -334,7 +435,7 @@
     if (document.querySelector('script[data-nji-chatbot-core]') || document.querySelector('[data-nji-chatbot]')) return;
 
     const core = document.createElement('script');
-    core.src = new URL('chatbot-core.js?v=8-white-speech-bubble', baseSrc).href;
+    core.src = new URL('chatbot-core.js?v=9-context-aware', baseSrc).href;
     core.async = false;
     core.setAttribute('data-nji-chatbot-core', '');
     core.addEventListener('load', setupAfterCoreLoad, { once: true });
