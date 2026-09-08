@@ -103,14 +103,12 @@ function get_api_key(): string {
     $key = getenv('GEMINI_API_KEY');
     if (is_string($key) && trim($key) !== '') return trim($key);
 
-    // Recommended fallback: keep this file outside the public web root.
     $privateConfig = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'nextji-gemini-key.php';
     if (is_file($privateConfig)) {
         $value = require $privateConfig;
         if (is_string($value) && trim($value) !== '') return trim($value);
     }
 
-    // Last-resort local config. This filename is ignored by Git.
     $localConfig = __DIR__ . DIRECTORY_SEPARATOR . 'chat-api-config.php';
     if (is_file($localConfig)) {
         $value = require $localConfig;
@@ -138,7 +136,7 @@ function detect_category(string $text): string {
     if (preg_match('/職業紹介|仕事探|仕事を探|求職|就職|求人紹介|工場求人|物流求人/u', $text)) return 'placement';
     if (preg_match('/ホームページ|\bHP\b|\bWEB\b|サイト|\bLP\b/iu', $text)) return 'web';
     if (preg_match('/SNS|Instagram|インスタ|MEO|Googleマップ|Google Map/iu', $text)) return 'sns';
-    if (preg_match('/AI|効率化|システム|自動化|DX/iu', $text)) return 'ai';
+    if (preg_match('/AI|効率化|システム|自動化|DX|チャットボット/iu', $text)) return 'ai';
     if (preg_match('/予約/u', $text)) return 'reservation';
     if (preg_match('/アプリ/u', $text)) return 'app';
     if (preg_match('/カメラ|防犯/u', $text)) return 'camera';
@@ -241,12 +239,13 @@ if (text_length($message) > 800) {
     ]);
 }
 
-// On Gemini free tier, avoid sending obvious personal/payment information to Google.
 if (contains_sensitive_input($message)) {
     respond_json(200, [
         'ok' => true,
         'answer' => '個人情報を含む内容はAIには送信していません。お名前・電話番号・メールアドレスなどは、お問い合わせフォームへ直接ご入力ください。',
         'category' => detect_category($message),
+        'action' => 'none',
+        'pending_intent' => '',
         'suggest_contact' => true,
     ]);
 }
@@ -254,7 +253,7 @@ if (contains_sensitive_input($message)) {
 $contents = [];
 $historyRaw = $request['history'] ?? [];
 if (is_array($historyRaw)) {
-    foreach (array_slice($historyRaw, -8) as $item) {
+    foreach (array_slice($historyRaw, -10) as $item) {
         if (!is_array($item)) continue;
         $role = (string)($item['role'] ?? '');
         $content = trim((string)($item['content'] ?? ''));
@@ -263,7 +262,7 @@ if (is_array($historyRaw)) {
         $contents[] = [
             'role' => $role === 'assistant' ? 'model' : 'user',
             'parts' => [[
-                'text' => trim_text(redact_sensitive_input($content), 900)
+                'text' => trim_text(redact_sensitive_input($content), 1200)
             ]],
         ];
     }
@@ -281,52 +280,76 @@ if ($apiKey === '') {
         'message' => '現在AI回答を準備中です。メニューまたはお問い合わせフォームをご利用ください。'
     ]);
 }
-$knowledge = get_nji_knowledge();
 
+$knowledge = get_nji_knowledge();
 $knowledgeBlock = $knowledge !== '' ? "\n\n【NJI専用知識データ】\n" . $knowledge : '';
 
 $instructions = <<<'PROMPT'
-あなたは株式会社Next Japan Innovationの公式Webサイト内「お問い合わせサポートAI」です。
-必ず日本語で、簡潔・丁寧・事務的に回答してください。回答は原則2〜5文です。
+あなたは株式会社Next Japan Innovation（NJI）の公式Webサイトにいる「NJI・chatBOTくん」です。
+NJIの受付・営業サポート担当として、ChatGPTのように会話の文脈を理解し、自然で柔軟に受け答えしてください。
 
-【確定している会社情報】
-- 会社名：株式会社Next Japan Innovation
-- 所在地：〒810-0001 福岡県福岡市中央区天神4丁目9-10 第二正友ビル4階
-- 電話：092-600-3558
-- 電話受付：平日10:00〜18:00
-- メール：info@next-ji.jp
-- Web：https://next-ji.jp/
+【会話スタイル】
+- 必ず日本語で回答する。
+- 丁寧だが硬すぎない。会社スタッフがその場で自然に案内しているように話す。
+- 同じ意味の質問でも毎回まったく同じ言い回しを繰り返さない。
+- 「承ります」「個別条件は担当者が確認します」だけで会話を終わらせない。
+- 回答は通常2〜5文程度。必要なら短い追加質問を1つ行う。
+- 知識データにある事実・料金・対応可否を最優先し、事実そのものは言い換えても変更しない。
+- 「ASK」は内部管理用語なので利用者には表示しない。
+- Markdown記号やコードブロックは使わない。
 
-【サイトで案内している主な内容】
-- ホームページ制作・HP制作
-- SNS運用代行・MEO支援
-- デジタル化・AI導入補助金支援
-- 業務効率化システム・自動化
-- 店舗型予約ツール
-- ネットワークカメラ
-- 店舗公式アプリ
-- 有料職業紹介
-- 採用情報
-- 販売代理店・事業パートナー募集
+【最重要：情報が足りない質問への対応】
+利用者が「月額いくら？」「料金は？」「納期は？」「どのくらいかかる？」など、質問の対象サービスを特定できない場合は、勝手に特定せず自然に聞き返してください。
+その場合は answer で「どちらのサービスについてでしょうか？」など自然に案内し、action を "show_service_menu" にしてください。
+pending_intent には、利用者が知りたい内容を短く入れてください。例："月額料金"、"料金・見積り"、"導入・制作期間"、"機能"。
+対象サービスが質問文または直前の会話から明確な場合は、メニューを出さず、そのサービスについて直接回答してください。
 
-【有料職業紹介について確定している情報】
-- 製造・物流分野を中心に求職者と採用企業をつなぐサービス。
-- 求職者には希望条件・経験のヒアリング、求人情報と労働条件の案内、応募・面接日程調整、赴任・入社準備、就業開始後のフォローを行う。
-- 採用企業には採用要件の整理、候補者紹介、面接・選考連絡、内定・入社日の調整、採用後の状況確認を行う。
-- 取扱求人は時期や地域で異なる。具体的な求人・待遇・勤務地は個別確認が必要。
+例：
+利用者「月額いくらですか？」
+→ answer「月額料金ですね。どちらのサービスについてでしょうか？」
+→ action="show_service_menu", pending_intent="月額料金"
 
-【厳守事項】
-- サイト上で確定していない料金、割引、納期、契約条件、採用条件、求人の有無、補助金の採択可否などを推測・断定しない。
-- 不明な場合は「担当者確認が必要」と案内し、問い合わせフォームまたは電話を勧める。
+利用者「ホームページの月額はいくら？」
+→ 知識データにあるホームページ料金をそのまま自然に回答。action="none"
+
+利用者「AIチャットボットくんの料金は？」
+→ AIチャットボットくんの料金情報を自然に回答。action="none"
+
+【会話の文脈】
+- 直前までホームページ制作について話していて、その後「制作期間は？」と聞かれた場合は、ホームページ制作の期間として回答する。
+- 利用者がメニュー選択後に質問した場合も、その選択サービスを会話の文脈として扱う。
+- 不要な聞き返しはしない。対象が特定できるならそのまま答える。
+
+【料金・見積り】
+- 知識データに具体的な料金帯が登録されている場合は、その金額を案内してよい。
+- 「料金は内容によって異なるため回答できません」と一律に逃げない。
+- 知識データにない具体的金額を推測しない。
+- 概算や料金帯はAIが案内してよい。正式な見積りは担当者確認であることを必要に応じて添える。
+- 料金が構築内容によって変わる商品は、自然に「内容によって変わるため詳しくはお問い合わせください」などと案内する。
+
+【対応可否】
+- 知識データで「対応可能」とされている機能は、担当者確認だけで終わらせず、何ができるか具体的に説明する。
+- 知識データで「対応不可」とされている機能は、できると答えない。
+- 非推奨の機能は理由と代替案があれば簡潔に案内する。
+
+【問い合わせ誘導】
+- 知識データに答えがある一般的な質問では、毎回問い合わせボタンを出す必要はない。
+- 料金が要相談の機能、正式見積り、契約条件、個別案件、具体的な求人、担当者による確認が必要な内容では suggest_contact=true にしてよい。
+- 単なる料金帯・営業時間・機能説明など、知識データだけで十分回答できる場合は原則 suggest_contact=false。
+
+【安全・制約】
 - 個人情報、カード情報、パスワードなどをチャット内で求めない。
-- Next Japan Innovationと無関係な雑談・一般質問には深入りせず、会社・サービスに関する相談を案内する。
+- 契約・正式な申込みをAIが受理したと表現しない。
 - 法律・税務・医療などの専門判断は行わない。
-- Markdown記号は使わない。
+- NJIと無関係な一般雑談には深入りせず、必要ならNJIのサービス相談へ自然に戻す。
 
-必ず次のJSONだけを返してください。コードブロックは付けないでください。
-{"answer":"利用者への回答","category":"web","suggest_contact":false}
+必ずJSONだけを返してください。コードブロックは付けないでください。
+形式：
+{"answer":"利用者への回答","category":"web","action":"none","pending_intent":"","suggest_contact":false}
+
 category は web, sns, ai, reservation, camera, app, placement, recruit, partner, other のいずれか。
-suggest_contact は、見積り、料金、納期、具体的な求人、応募、採用、代理店条件、個別案件、担当者確認が必要な質問では true。それ以外の一般的な案内では false。
+action は "none" または "show_service_menu" のいずれか。
+pending_intent は action="show_service_menu" のときだけ短い日本語を入れ、それ以外は空文字にしてください。
 PROMPT;
 
 $instructions .= $knowledgeBlock;
@@ -337,8 +360,8 @@ $payload = [
     ],
     'contents' => $contents,
     'generationConfig' => [
-        'temperature' => 0.2,
-        'maxOutputTokens' => 450,
+        'temperature' => 0.65,
+        'maxOutputTokens' => 650,
         'responseMimeType' => 'application/json',
     ],
 ];
@@ -372,20 +395,37 @@ if (!is_array($structured)) {
     $structured = [
         'answer' => $outputText,
         'category' => detect_category($message),
-        'suggest_contact' => true,
+        'action' => 'none',
+        'pending_intent' => '',
+        'suggest_contact' => false,
     ];
 }
 
 $answer = trim((string)($structured['answer'] ?? ''));
 $category = (string)($structured['category'] ?? detect_category($message));
+$action = (string)($structured['action'] ?? 'none');
+$pendingIntent = trim((string)($structured['pending_intent'] ?? ''));
 $suggestContact = (bool)($structured['suggest_contact'] ?? false);
-$allowed = ['web', 'sns', 'ai', 'reservation', 'camera', 'app', 'placement', 'recruit', 'partner', 'other'];
-if (!in_array($category, $allowed, true)) $category = 'other';
-if ($answer === '') $answer = '担当者による確認が必要です。お問い合わせフォームからご相談ください。';
+
+$allowedCategories = ['web', 'sns', 'ai', 'reservation', 'camera', 'app', 'placement', 'recruit', 'partner', 'other'];
+if (!in_array($category, $allowedCategories, true)) $category = 'other';
+
+$allowedActions = ['none', 'show_service_menu'];
+if (!in_array($action, $allowedActions, true)) $action = 'none';
+if ($action !== 'show_service_menu') $pendingIntent = '';
+$pendingIntent = trim_text($pendingIntent, 80);
+
+if ($answer === '') {
+    $answer = $action === 'show_service_menu'
+        ? 'どちらのサービスについてでしょうか？'
+        : 'もう少し詳しく教えていただけますか？';
+}
 
 respond_json(200, [
     'ok' => true,
-    'answer' => trim_text($answer, 1400),
+    'answer' => trim_text($answer, 1800),
     'category' => $category,
+    'action' => $action,
+    'pending_intent' => $pendingIntent,
     'suggest_contact' => $suggestContact,
 ]);
