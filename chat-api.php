@@ -76,27 +76,12 @@ function enforce_rate_limit(): void {
 
 function get_nji_knowledge(): string {
     $path = __DIR__ . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'nji-knowledge.json';
-
-    if (!is_file($path)) {
-        return '';
-    }
-
+    if (!is_file($path)) return '';
     $raw = file_get_contents($path);
-
-    if (!is_string($raw) || trim($raw) === '') {
-        return '';
-    }
-
+    if (!is_string($raw) || trim($raw) === '') return '';
     $decoded = json_decode($raw, true);
-
-    if (!is_array($decoded)) {
-        return '';
-    }
-
-    return json_encode(
-        $decoded,
-        JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT
-    ) ?: '';
+    if (!is_array($decoded)) return '';
+    return json_encode($decoded, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) ?: '';
 }
 
 function get_api_key(): string {
@@ -114,7 +99,6 @@ function get_api_key(): string {
         $value = require $localConfig;
         if (is_string($value) && trim($value) !== '') return trim($value);
     }
-
     return '';
 }
 
@@ -145,109 +129,74 @@ function detect_category(string $text): string {
     return 'other';
 }
 
+function detect_intent_hint(string $text): string {
+    $category = detect_category($text);
+    if ($category !== 'other') return '';
+
+    if (preg_match('/月額|月いくら|毎月|料金|費用|価格|値段|いくら|コスト|金額|見積|見積もり|見積り|お金|プラン料金/u', $text)) {
+        return '料金・月額についての質問。対象サービスが会話履歴からも特定できなければ、サービス選択メニューを出す。';
+    }
+    if (preg_match('/納期|期間|何日|何週間|何か月|何ヶ月|どれくらい|どのくらい|いつできる|いつ完成|いつから|開始時期|制作日数|導入まで/u', $text)) {
+        return '納期・制作期間・導入期間についての質問。対象サービスが特定できなければ、サービス選択メニューを出す。';
+    }
+    if (preg_match('/できる|可能|対応|使える|連携|つなげ|機能|できますか|できる？/u', $text)) {
+        return '対応可否・機能についての質問。直前の会話文脈を優先して対象サービスを判断する。';
+    }
+    return '';
+}
+
 function call_gemini(string $apiKey, array $payload): array {
     $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent';
     $json = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    if ($json === false) {
-        return ['status' => 0, 'body' => '', 'error' => 'encode_failed'];
-    }
+    if ($json === false) return ['status' => 0, 'body' => '', 'error' => 'encode_failed'];
 
-    $headers = [
-        'Content-Type: application/json',
-        'x-goog-api-key: ' . $apiKey,
-        'x-goog-api-client: next-japan-innovation-chatbot/1.0'
-    ];
+    $headers = ['Content-Type: application/json','x-goog-api-key: ' . $apiKey,'x-goog-api-client: next-japan-innovation-chatbot/1.0'];
 
     if (function_exists('curl_init')) {
         $ch = curl_init($url);
-        curl_setopt_array($ch, [
-            CURLOPT_POST => true,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_CONNECTTIMEOUT => 8,
-            CURLOPT_TIMEOUT => 20,
-            CURLOPT_HTTPHEADER => $headers,
-            CURLOPT_POSTFIELDS => $json,
-        ]);
+        curl_setopt_array($ch, [CURLOPT_POST=>true,CURLOPT_RETURNTRANSFER=>true,CURLOPT_CONNECTTIMEOUT=>8,CURLOPT_TIMEOUT=>20,CURLOPT_HTTPHEADER=>$headers,CURLOPT_POSTFIELDS=>$json]);
         $body = curl_exec($ch);
         $error = curl_error($ch);
         $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
-        return ['status' => $status, 'body' => is_string($body) ? $body : '', 'error' => $error];
+        return ['status'=>$status,'body'=>is_string($body)?$body:'','error'=>$error];
     }
 
-    $context = stream_context_create([
-        'http' => [
-            'method' => 'POST',
-            'timeout' => 20,
-            'ignore_errors' => true,
-            'header' => implode("\r\n", $headers) . "\r\n",
-            'content' => $json,
-        ],
-    ]);
+    $context = stream_context_create(['http'=>['method'=>'POST','timeout'=>20,'ignore_errors'=>true,'header'=>implode("\r\n",$headers)."\r\n",'content'=>$json]]);
     $body = @file_get_contents($url, false, $context);
     $status = 0;
     if (isset($http_response_header) && is_array($http_response_header) && isset($http_response_header[0])) {
-        if (preg_match('/\s(\d{3})\s/', $http_response_header[0], $m)) $status = (int) $m[1];
+        if (preg_match('/\s(\d{3})\s/', $http_response_header[0], $m)) $status = (int)$m[1];
     }
-    return ['status' => $status, 'body' => is_string($body) ? $body : '', 'error' => $body === false ? 'http_failed' : ''];
+    return ['status'=>$status,'body'=>is_string($body)?$body:'','error'=>$body===false?'http_failed':''];
 }
 
 function extract_gemini_text(array $response): string {
     $parts = $response['candidates'][0]['content']['parts'] ?? null;
     if (!is_array($parts)) return '';
-
     $texts = [];
-    foreach ($parts as $part) {
-        if (is_array($part) && isset($part['text']) && is_string($part['text'])) {
-            $texts[] = $part['text'];
-        }
-    }
+    foreach ($parts as $part) if (is_array($part) && isset($part['text']) && is_string($part['text'])) $texts[] = $part['text'];
     return trim(implode("\n", $texts));
 }
 
-if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
-    respond_json(405, ['ok' => false, 'code' => 'METHOD_NOT_ALLOWED']);
-}
-
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') respond_json(405, ['ok'=>false,'code'=>'METHOD_NOT_ALLOWED']);
 check_origin();
 enforce_rate_limit();
 
 $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
-if (stripos($contentType, 'application/json') === false) {
-    respond_json(415, ['ok' => false, 'code' => 'JSON_REQUIRED']);
-}
+if (stripos($contentType, 'application/json') === false) respond_json(415, ['ok'=>false,'code'=>'JSON_REQUIRED']);
 
 $raw = file_get_contents('php://input');
-if (!is_string($raw) || strlen($raw) > 24000) {
-    respond_json(413, ['ok' => false, 'code' => 'PAYLOAD_TOO_LARGE']);
-}
-
+if (!is_string($raw) || strlen($raw) > 24000) respond_json(413, ['ok'=>false,'code'=>'PAYLOAD_TOO_LARGE']);
 $request = json_decode($raw, true);
-if (!is_array($request)) {
-    respond_json(400, ['ok' => false, 'code' => 'INVALID_JSON']);
-}
+if (!is_array($request)) respond_json(400, ['ok'=>false,'code'=>'INVALID_JSON']);
 
 $message = trim((string)($request['message'] ?? ''));
-if ($message === '') {
-    respond_json(400, ['ok' => false, 'code' => 'MESSAGE_REQUIRED']);
-}
-if (text_length($message) > 800) {
-    respond_json(400, [
-        'ok' => false,
-        'code' => 'MESSAGE_TOO_LONG',
-        'message' => '質問は800文字以内で入力してください。'
-    ]);
-}
+if ($message === '') respond_json(400, ['ok'=>false,'code'=>'MESSAGE_REQUIRED']);
+if (text_length($message) > 800) respond_json(400, ['ok'=>false,'code'=>'MESSAGE_TOO_LONG','message'=>'質問は800文字以内で入力してください。']);
 
 if (contains_sensitive_input($message)) {
-    respond_json(200, [
-        'ok' => true,
-        'answer' => '個人情報を含む内容はAIには送信していません。お名前・電話番号・メールアドレスなどは、お問い合わせフォームへ直接ご入力ください。',
-        'category' => detect_category($message),
-        'action' => 'none',
-        'pending_intent' => '',
-        'suggest_contact' => true,
-    ]);
+    respond_json(200, ['ok'=>true,'answer'=>'個人情報を含む内容はAIには送信していません。お名前・電話番号・メールアドレスなどは、お問い合わせフォームへ直接ご入力ください。','category'=>detect_category($message),'action'=>'none','pending_intent'=>'','suggest_contact'=>true]);
 }
 
 $contents = [];
@@ -258,28 +207,19 @@ if (is_array($historyRaw)) {
         $role = (string)($item['role'] ?? '');
         $content = trim((string)($item['content'] ?? ''));
         if (($role !== 'user' && $role !== 'assistant') || $content === '') continue;
-
-        $contents[] = [
-            'role' => $role === 'assistant' ? 'model' : 'user',
-            'parts' => [[
-                'text' => trim_text(redact_sensitive_input($content), 1200)
-            ]],
-        ];
+        $contents[] = ['role'=>$role==='assistant'?'model':'user','parts'=>[['text'=>trim_text(redact_sensitive_input($content),1200)]]];
     }
 }
-$contents[] = [
-    'role' => 'user',
-    'parts' => [['text' => $message]],
-];
+
+$intentHint = detect_intent_hint($message);
+$userTextForModel = $message;
+if ($intentHint !== '') {
+    $userTextForModel .= "\n\n【内部意図補足】\n" . $intentHint . "\nこの補足文は利用者には見せず、回答文にも引用しないこと。";
+}
+$contents[] = ['role'=>'user','parts'=>[['text'=>$userTextForModel]]];
 
 $apiKey = get_api_key();
-if ($apiKey === '') {
-    respond_json(503, [
-        'ok' => false,
-        'code' => 'AI_NOT_CONFIGURED',
-        'message' => '現在AI回答を準備中です。メニューまたはお問い合わせフォームをご利用ください。'
-    ]);
-}
+if ($apiKey === '') respond_json(503, ['ok'=>false,'code'=>'AI_NOT_CONFIGURED','message'=>'現在AI回答を準備中です。メニューまたはお問い合わせフォームをご利用ください。']);
 
 $knowledge = get_nji_knowledge();
 $knowledgeBlock = $knowledge !== '' ? "\n\n【NJI専用知識データ】\n" . $knowledge : '';
@@ -292,32 +232,41 @@ NJIの受付・営業サポート担当として、ChatGPTのように会話の�
 - 必ず日本語で回答する。
 - 丁寧だが硬すぎない。会社スタッフがその場で自然に案内しているように話す。
 - 同じ意味の質問でも毎回まったく同じ言い回しを繰り返さない。
+- 短文、口語、省略、言い切り、語尾だけの質問でも意味を推測して自然に処理する。
 - 「承ります」「個別条件は担当者が確認します」だけで会話を終わらせない。
 - 回答は通常2〜5文程度。必要なら短い追加質問を1つ行う。
 - 知識データにある事実・料金・対応可否を最優先し、事実そのものは言い換えても変更しない。
 - 「ASK」は内部管理用語なので利用者には表示しない。
 - Markdown記号やコードブロックは使わない。
 
-【最重要：情報が足りない質問への対応】
-利用者が「月額いくら？」「料金は？」「納期は？」「どのくらいかかる？」など、質問の対象サービスを特定できない場合は、勝手に特定せず自然に聞き返してください。
+【最重要：表現の揺れを吸収する】
+利用者は完全な文章で質問するとは限りません。意味が同じなら同じ意図として扱ってください。
+例：
+「月額はいくらですか？」「月額は？」「月いくら？」「毎月いくら？」「料金は？」「値段は？」「費用は？」「いくら？」「金額は？」「コストは？」→ すべて料金・月額の質問。
+「納期は？」「期間は？」「何日？」「どのくらい？」「いつできる？」「完成いつ？」→ すべて制作・導入期間の質問。
+「できる？」「対応してる？」「使える？」「連携できる？」→ 直前の話題に対する対応可否・機能の質問。
+誤字や多少の言い回し違いがあっても、文脈から意味が明確なら聞き返さず回答してください。
+
+【情報が足りない質問への対応】
+料金・納期・機能などの意図は分かるが、対象サービスを質問文や会話履歴から特定できない場合は、勝手にサービスを決めず自然に聞き返してください。
 その場合は answer で「どちらのサービスについてでしょうか？」など自然に案内し、action を "show_service_menu" にしてください。
 pending_intent には、利用者が知りたい内容を短く入れてください。例："月額料金"、"料金・見積り"、"導入・制作期間"、"機能"。
 対象サービスが質問文または直前の会話から明確な場合は、メニューを出さず、そのサービスについて直接回答してください。
 
 例：
-利用者「月額いくらですか？」
+利用者「月額は？」
 → answer「月額料金ですね。どちらのサービスについてでしょうか？」
 → action="show_service_menu", pending_intent="月額料金"
 
-利用者「ホームページの月額はいくら？」
-→ 知識データにあるホームページ料金をそのまま自然に回答。action="none"
+利用者「ホームページの月額は？」
+→ 知識データにあるホームページ料金を自然に回答。action="none"
 
-利用者「AIチャットボットくんの料金は？」
+利用者「AIチャットボットくん、月いくら？」
 → AIチャットボットくんの料金情報を自然に回答。action="none"
 
 【会話の文脈】
 - 直前までホームページ制作について話していて、その後「制作期間は？」と聞かれた場合は、ホームページ制作の期間として回答する。
-- 利用者がメニュー選択後に質問した場合も、その選択サービスを会話の文脈として扱う。
+- 利用者がメニュー選択後に「月額は？」「納期は？」「それできる？」のように短く続けても、直前の選択サービスを引き継ぐ。
 - 不要な聞き返しはしない。対象が特定できるならそのまま答える。
 
 【料金・見積り】
@@ -354,18 +303,7 @@ PROMPT;
 
 $instructions .= $knowledgeBlock;
 
-$payload = [
-    'systemInstruction' => [
-        'parts' => [['text' => $instructions]],
-    ],
-    'contents' => $contents,
-    'generationConfig' => [
-        'temperature' => 0.65,
-        'maxOutputTokens' => 650,
-        'responseMimeType' => 'application/json',
-    ],
-];
-
+$payload = ['systemInstruction'=>['parts'=>[['text'=>$instructions]]],'contents'=>$contents,'generationConfig'=>['temperature'=>0.65,'maxOutputTokens'=>650,'responseMimeType'=>'application/json']];
 $result = call_gemini($apiKey, $payload);
 $status = (int)($result['status'] ?? 0);
 $body = (string)($result['body'] ?? '');
@@ -373,33 +311,16 @@ $body = (string)($result['body'] ?? '');
 if ($status < 200 || $status >= 300 || $body === '') {
     error_log('NJI chatbot Gemini request failed. HTTP=' . $status);
     $clientStatus = $status === 429 ? 429 : 502;
-    respond_json($clientStatus, [
-        'ok' => false,
-        'code' => $status === 429 ? 'AI_RATE_LIMIT' : 'AI_UNAVAILABLE',
-        'message' => 'AI回答を取得できませんでした。メニューまたはお問い合わせフォームをご利用ください。'
-    ]);
+    respond_json($clientStatus, ['ok'=>false,'code'=>$status===429?'AI_RATE_LIMIT':'AI_UNAVAILABLE','message'=>'AI回答を取得できませんでした。メニューまたはお問い合わせフォームをご利用ください。']);
 }
 
 $response = json_decode($body, true);
-if (!is_array($response)) {
-    respond_json(502, ['ok' => false, 'code' => 'AI_INVALID_RESPONSE']);
-}
-
+if (!is_array($response)) respond_json(502, ['ok'=>false,'code'=>'AI_INVALID_RESPONSE']);
 $outputText = extract_gemini_text($response);
-if ($outputText === '') {
-    respond_json(502, ['ok' => false, 'code' => 'AI_EMPTY_RESPONSE']);
-}
+if ($outputText === '') respond_json(502, ['ok'=>false,'code'=>'AI_EMPTY_RESPONSE']);
 
 $structured = json_decode($outputText, true);
-if (!is_array($structured)) {
-    $structured = [
-        'answer' => $outputText,
-        'category' => detect_category($message),
-        'action' => 'none',
-        'pending_intent' => '',
-        'suggest_contact' => false,
-    ];
-}
+if (!is_array($structured)) $structured = ['answer'=>$outputText,'category'=>detect_category($message),'action'=>'none','pending_intent'=>'','suggest_contact'=>false];
 
 $answer = trim((string)($structured['answer'] ?? ''));
 $category = (string)($structured['category'] ?? detect_category($message));
@@ -407,25 +328,12 @@ $action = (string)($structured['action'] ?? 'none');
 $pendingIntent = trim((string)($structured['pending_intent'] ?? ''));
 $suggestContact = (bool)($structured['suggest_contact'] ?? false);
 
-$allowedCategories = ['web', 'sns', 'ai', 'reservation', 'camera', 'app', 'placement', 'recruit', 'partner', 'other'];
+$allowedCategories = ['web','sns','ai','reservation','camera','app','placement','recruit','partner','other'];
 if (!in_array($category, $allowedCategories, true)) $category = 'other';
-
-$allowedActions = ['none', 'show_service_menu'];
+$allowedActions = ['none','show_service_menu'];
 if (!in_array($action, $allowedActions, true)) $action = 'none';
 if ($action !== 'show_service_menu') $pendingIntent = '';
 $pendingIntent = trim_text($pendingIntent, 80);
+if ($answer === '') $answer = $action === 'show_service_menu' ? 'どちらのサービスについてでしょうか？' : 'もう少し詳しく教えていただけますか？';
 
-if ($answer === '') {
-    $answer = $action === 'show_service_menu'
-        ? 'どちらのサービスについてでしょうか？'
-        : 'もう少し詳しく教えていただけますか？';
-}
-
-respond_json(200, [
-    'ok' => true,
-    'answer' => trim_text($answer, 1800),
-    'category' => $category,
-    'action' => $action,
-    'pending_intent' => $pendingIntent,
-    'suggest_contact' => $suggestContact,
-]);
+respond_json(200, ['ok'=>true,'answer'=>trim_text($answer,1800),'category'=>$category,'action'=>$action,'pending_intent'=>$pendingIntent,'suggest_contact'=>$suggestContact]);
