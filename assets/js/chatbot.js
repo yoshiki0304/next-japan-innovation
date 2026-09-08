@@ -46,6 +46,7 @@
       chatBody.style.overscrollBehaviorY = 'contain';
       chatBody.style.webkitOverflowScrolling = 'touch';
       chatBody.style.scrollBehavior = 'auto';
+      chatBody.style.overflowAnchor = 'none';
 
       const reduceTyping = window.matchMedia('(prefers-reduced-motion: reduce)');
       let typeQueue = Promise.resolve();
@@ -56,12 +57,6 @@
       let lastSubmittedText = '';
 
       const distanceFromBottom = () => Math.max(0, chatBody.scrollHeight - chatBody.clientHeight - chatBody.scrollTop);
-      const isNearBottom = () => distanceFromBottom() <= 42;
-
-      const scrollToBottom = (force = false) => {
-        if (manualScrollLock && !force) return;
-        chatBody.scrollTop = chatBody.scrollHeight;
-      };
 
       const keepAtTop = () => {
         chatBody.scrollTop = 0;
@@ -85,6 +80,9 @@
         const input = root?.querySelector('.nji-chatbot__input');
         if (!form || !input) return;
 
+        manualScrollLock = false;
+        delete chatBody.dataset.manualScrollLock;
+
         const wrap = button?.closest('.nji-chatbot__choices');
         if (wrap) {
           wrap.querySelectorAll('button').forEach((btn) => { btn.disabled = true; });
@@ -103,7 +101,7 @@
         });
       };
 
-      const appendServiceIntentMenu = (intent) => {
+      const appendServiceIntentMenuNow = (intent) => {
         if (!intent || !chatBody.isConnected) return;
         if (chatBody.querySelector('.nji-chatbot__choices[data-context-intent-menu="1"]')) return;
 
@@ -122,7 +120,20 @@
         });
 
         chatBody.appendChild(wrap);
-        scrollToBottom();
+      };
+
+      // Do not add a large menu while the thinking/typewriter animation is still
+      // running. Inserting it early changes scrollHeight and caused large jumps and
+      // temporary blank screens. Wait until the current reply is fully rendered.
+      const appendServiceIntentMenu = (intent) => {
+        if (!intent) return;
+        window.setTimeout(() => {
+          const queueAtRequest = typeQueue;
+          queueAtRequest.then(() => {
+            if (manualScrollLock) return appendServiceIntentMenuNow(intent);
+            appendServiceIntentMenuNow(intent);
+          });
+        }, 0);
       };
 
       const removeImmediateContactActions = (row) => {
@@ -188,7 +199,7 @@
           const currentIntent = pendingServiceIntent;
           pendingServiceIntent = '';
           appendServiceIntentMenu(currentIntent);
-        }, 140);
+        }, 0);
       };
 
       document.addEventListener('nji:chatbot-ai-meta', handleAiMeta);
@@ -197,41 +208,27 @@
       const inputField = root?.querySelector('.nji-chatbot__input');
       inputForm?.addEventListener('submit', () => {
         lastSubmittedText = String(inputField?.value || '').trim();
-      }, true);
-
-      // If the user scrolls upward while a reply is being typed, stop automatic
-      // bottom-following immediately. Resume only after they return to the bottom.
-      chatBody.addEventListener('wheel', (event) => {
-        if (event.ctrlKey) return;
-        if (event.deltaY < 0) {
-          manualScrollLock = true;
-          chatBody.dataset.manualScrollLock = '1';
-          return;
-        }
-
-        if (event.deltaY > 0 && manualScrollLock) {
-          window.setTimeout(() => {
-            if (!isNearBottom()) return;
-            manualScrollLock = false;
-            delete chatBody.dataset.manualScrollLock;
-          }, 180);
-        }
-      }, { passive: true, capture: true });
-
-      chatBody.addEventListener('scroll', () => {
-        if (!manualScrollLock || !isNearBottom()) return;
         manualScrollLock = false;
         delete chatBody.dataset.manualScrollLock;
-      }, { passive: true });
+      }, true);
 
-      // A deliberate menu/action click starts a new answer, so following the newest
-      // content is wanted again even if the user had previously scrolled upward.
+      // Any deliberate wheel/trackpad interaction means the user owns the scroll
+      // position. Do not auto-follow again until they submit or choose a menu item.
+      chatBody.addEventListener('wheel', (event) => {
+        if (event.ctrlKey) return;
+        if (event.deltaY === 0) return;
+        manualScrollLock = true;
+        chatBody.dataset.manualScrollLock = '1';
+      }, { passive: true, capture: true });
+
+      // A menu/action click starts a new answer, so auto-follow may be enabled again.
+      // We intentionally do not force-scroll here; the core will position the new
+      // user bubble once, avoiding a second competing scroll operation.
       chatBody.addEventListener('click', (event) => {
         const interactive = event.target.closest('.nji-chatbot__choice,.nji-chatbot__action');
         if (!interactive || !chatBody.contains(interactive)) return;
         manualScrollLock = false;
         delete chatBody.dataset.manualScrollLock;
-        scrollToBottom(true);
       }, true);
 
       const prepareStaggerItems = (container, selector) => {
@@ -252,8 +249,6 @@
         const items = Array.from(container.querySelectorAll(selector));
         if (!items.length) return;
 
-        const updateScroll = options.keepTop === true ? keepAtTop : scrollToBottom;
-
         if (reduceTyping.matches) {
           items.forEach((item) => {
             item.style.opacity = '';
@@ -261,7 +256,7 @@
             item.style.transition = '';
             item.style.pointerEvents = '';
           });
-          updateScroll();
+          if (options.keepTop === true) keepAtTop();
           return;
         }
 
@@ -271,7 +266,7 @@
             item.style.opacity = '1';
             item.style.transform = 'translateY(0)';
             item.style.pointerEvents = '';
-            updateScroll();
+            if (options.keepTop === true) keepAtTop();
           }, index * 135);
         });
       };
@@ -300,7 +295,6 @@
 
         const chars = Array.from(fullText);
         let index = 0;
-        const updateScroll = options.initial === true ? keepAtTop : scrollToBottom;
 
         const tick = () => {
           if (!bubble.isConnected) {
@@ -310,11 +304,11 @@
 
           const ch = chars[index++];
           bubble.textContent += ch;
-          updateScroll();
+          if (options.initial === true) keepAtTop();
 
           if (index >= chars.length) {
             bubble.removeAttribute('aria-label');
-            updateScroll();
+            if (options.initial === true) keepAtTop();
             resolve();
             return;
           }
@@ -337,7 +331,6 @@
         let thinkingIndex = 0;
         bubble.textContent = thinkingFrames[thinkingIndex];
         bubble.setAttribute('aria-label', '回答を作成中');
-        scrollToBottom();
 
         const thinkingTimer = window.setInterval(() => {
           if (!bubble.isConnected) {
@@ -346,7 +339,6 @@
           }
           thinkingIndex = (thinkingIndex + 1) % thinkingFrames.length;
           bubble.textContent = thinkingFrames[thinkingIndex];
-          scrollToBottom();
         }, 420);
 
         const replyDelay = 3000 + Math.random() * 3000;
@@ -495,7 +487,7 @@
     if (document.querySelector('script[data-nji-chatbot-core]') || document.querySelector('[data-nji-chatbot]')) return;
 
     const core = document.createElement('script');
-    core.src = new URL('chatbot-core.js?v=9-context-aware', baseSrc).href;
+    core.src = new URL('chatbot-core.js?v=10-stable-scroll', baseSrc).href;
     core.async = false;
     core.setAttribute('data-nji-chatbot-core', '');
     core.addEventListener('load', setupAfterCoreLoad, { once: true });
