@@ -41,6 +41,7 @@
     .nji-chatbot__choices{display:grid;gap:8px;margin:6px 0 16px}
     .nji-chatbot__choice{width:100%;text-align:left;border:1px solid rgba(126,170,255,.26);border-radius:12px;background:rgba(75,140,255,.08);color:#f2f6fb;padding:10px 12px;cursor:pointer;font:inherit;font-size:12px;line-height:1.5;transition:background .2s ease,border-color .2s ease,transform .2s ease}
     .nji-chatbot__choice:hover{background:rgba(75,140,255,.17);border-color:rgba(126,170,255,.52);transform:translateY(-1px)}
+    .nji-chatbot__choice:disabled{opacity:.55;cursor:wait;transform:none}
     .nji-chatbot__choice strong{display:block;font-size:12px;margin-bottom:1px}.nji-chatbot__choice small{display:block;color:#9eb0c5;font-size:10px}
     .nji-chatbot__actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0 16px}
     .nji-chatbot__action{display:flex;align-items:center;justify-content:center;min-height:42px;border-radius:11px;text-decoration:none!important;font-size:11px;font-weight:800;letter-spacing:.02em;border:1px solid rgba(255,255,255,.14);color:#fff!important;background:rgba(255,255,255,.06);cursor:pointer;font-family:inherit}
@@ -92,6 +93,7 @@
   const form = root.querySelector('.nji-chatbot__inputbar');
   const input = root.querySelector('.nji-chatbot__input');
   const sendBtn = root.querySelector('.nji-chatbot__send');
+
   const aiHistory = [];
   let busy = false;
 
@@ -108,18 +110,18 @@
     other: 'その他'
   };
 
-  const serviceNames = {
-    web: 'ホームページ制作',
-    sns: 'SNS・MEO支援',
-    ai: 'AI・業務効率化',
-    reservation: '店舗型予約ツール',
-    camera: 'ネットワークカメラ',
-    app: '店舗公式アプリ',
-    placement: '有料職業紹介',
-    recruit: '採用',
-    partner: '代理店募集',
-    other: 'その他のご相談'
-  };
+  const serviceItems = [
+    ['placement', '有料職業紹介', '仕事を探している方・採用企業'],
+    ['web', 'ホームページ制作', '制作・リニューアル・運用'],
+    ['sns', 'SNS・MEO支援', 'Instagram運用・Googleマップ対策'],
+    ['ai', 'AI・業務効率化', 'AIチャットボット・業務システム・自動化'],
+    ['reservation', '店舗型予約ツール', '予約管理のご相談'],
+    ['app', '店舗公式アプリ', '店舗向け公式アプリ'],
+    ['camera', 'ネットワークカメラ', '販売・設置・運用'],
+    ['recruit', '採用について', 'NJIの採用情報'],
+    ['partner', '代理店募集について', '代理店・事業パートナー'],
+    ['other', 'その他のお問い合わせ', '自由にご相談ください']
+  ];
 
   const addBubble = (text, user = false) => {
     const row = document.createElement('div');
@@ -159,6 +161,33 @@
     });
     body.appendChild(wrap);
     body.scrollTop = body.scrollHeight;
+    return wrap;
+  };
+
+  const goToInquiryForm = (categoryKey = 'other', seedText = '') => {
+    const inquiryForm = document.getElementById('inquiry-form');
+    const category = categoryMap[categoryKey] || 'その他';
+    if (!inquiryForm) {
+      window.location.href = `contact.html?chat=${encodeURIComponent(category)}#inquiry-form`;
+      return;
+    }
+
+    const select = inquiryForm.querySelector('select[name="お問合せ種別"]');
+    const textarea = inquiryForm.querySelector('textarea[name="お問合せ内容"]');
+    if (select && [...select.options].some((opt) => opt.value === category)) {
+      select.value = category;
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    if (textarea && !textarea.value.trim() && seedText) {
+      textarea.value = seedText;
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    closeChat();
+    setTimeout(() => {
+      inquiryForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => (textarea || select)?.focus({ preventScroll: true }), 450);
+    }, 120);
   };
 
   const addContactActions = (categoryKey, seedText) => {
@@ -181,143 +210,6 @@
     body.scrollTop = body.scrollHeight;
   };
 
-  const goToInquiryForm = (categoryKey = 'other', seedText = '') => {
-    const inquiryForm = document.getElementById('inquiry-form');
-    const category = categoryMap[categoryKey] || 'その他';
-    if (!inquiryForm) {
-      window.location.href = `contact.html?chat=${encodeURIComponent(category)}#inquiry-form`;
-      return;
-    }
-
-    const select = inquiryForm.querySelector('select[name="お問合せ種別"]');
-    const textarea = inquiryForm.querySelector('textarea[name="お問合せ内容"]');
-
-    if (select && [...select.options].some((opt) => opt.value === category)) {
-      select.value = category;
-      select.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-    if (textarea && !textarea.value.trim() && seedText) {
-      textarea.value = seedText;
-      textarea.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-
-    closeChat();
-    setTimeout(() => {
-      inquiryForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      setTimeout(() => (textarea || select)?.focus({ preventScroll: true }), 450);
-    }, 120);
-  };
-
-  const showMainMenu = () => {
-    addChoices([
-      { label: '有料職業紹介', note: '仕事を探している方・採用企業', onClick: () => selectService('placement') },
-      { label: 'ホームページ制作', note: '制作・リニューアル・運用', onClick: () => selectService('web') },
-      { label: 'SNS・MEO支援', note: 'Instagram運用・Googleマップ対策', onClick: () => selectService('sns') },
-      { label: 'AI・業務効率化', note: '業務システム・自動化のご相談', onClick: () => selectService('ai') },
-      { label: '予約ツール・店舗アプリ', note: '予約管理・公式アプリ', onClick: () => selectService('reservation') },
-      { label: 'ネットワークカメラ', note: '販売・設置・運用', onClick: () => selectService('camera') },
-      { label: '採用について', onClick: () => selectService('recruit') },
-      { label: '代理店募集について', onClick: () => selectService('partner') },
-      { label: 'その他のお問い合わせ', onClick: () => selectService('other') }
-    ]);
-  };
-
-  const selectService = (key) => {
-    const name = serviceNames[key] || 'ご相談';
-    addBubble(name, true);
-
-    if (key === 'placement') {
-      addBubble('有料職業紹介についてですね。製造・物流分野を中心に、求職者の求人相談と企業の採用支援を行っています。具体的な求人や条件は時期・地域で異なるため、下の入力欄から希望条件を質問できます。');
-      addContactActions('placement', '有料職業紹介について相談したいです。\n相談内容：');
-      return;
-    }
-    if (key === 'recruit') {
-      addBubble('当社の採用についてのご相談ですね。募集職種・応募方法など、内容に応じて担当者がご案内します。');
-      addContactActions('recruit', '採用について相談したいです。\n');
-      return;
-    }
-    if (key === 'partner') {
-      addBubble('代理店・事業パートナーについてのご相談ですね。詳細条件は担当者からご案内します。');
-      addContactActions('partner', '代理店募集について詳しく相談したいです。\n');
-      return;
-    }
-    if (key === 'other') {
-      addBubble('内容を自由にご相談いただけます。下の入力欄に質問を入力してください。');
-      addContactActions('other', '相談内容：\n');
-      return;
-    }
-
-    addBubble(`${name}についてですね。知りたい内容を選ぶか、下の入力欄から具体的に質問してください。`);
-    addChoices([
-      { label: '料金・見積りについて', onClick: () => answerPrice(key) },
-      { label: '導入・制作期間について', onClick: () => answerSchedule(key) },
-      { label: 'まず相談したい', onClick: () => answerConsult(key) },
-      { label: '最初のメニューに戻る', onClick: () => { addBubble('最初のメニュー', true); showMainMenu(); } }
-    ]);
-  };
-
-  const answerPrice = (key) => {
-    addBubble('料金・見積りについて', true);
-    addBubble('料金は、ご希望の内容・規模・必要な機能によって変わります。ご要望を確認したうえで、担当者から正式なお見積りをご案内します。');
-    addContactActions(key, `${serviceNames[key]}の料金・見積りについて相談したいです。\n`);
-  };
-
-  const answerSchedule = (key) => {
-    addBubble('導入・制作期間について', true);
-    addBubble('開始時期や納期は、内容・規模・現在の進行状況によって異なります。ご希望時期がある場合は、フォームに記載いただくとスムーズです。');
-    addContactActions(key, `${serviceNames[key]}の導入・制作期間について相談したいです。\n希望時期：`);
-  };
-
-  const answerConsult = (key) => {
-    addBubble('まず相談したい', true);
-    addBubble('サービス内容がまだ固まっていない段階でも問題ありません。現在の課題や「こうしたい」という内容をお送りください。');
-    addContactActions(key, `${serviceNames[key]}について相談したいです。\n現在の課題・相談内容：`);
-  };
-
-  const detectCategory = (text) => {
-    if (/職業紹介|仕事探|仕事を探|求職|就職|求人紹介|工場求人|物流求人/i.test(text)) return 'placement';
-    if (/ホームページ|hp|web|サイト|lp/i.test(text)) return 'web';
-    if (/sns|instagram|インスタ|meo|googleマップ|google map/i.test(text)) return 'sns';
-    if (/ai|効率化|システム|自動化|dx/i.test(text)) return 'ai';
-    if (/予約/.test(text)) return 'reservation';
-    if (/アプリ/.test(text)) return 'app';
-    if (/カメラ|防犯/.test(text)) return 'camera';
-    if (/採用|自社求人|御社で働|応募/.test(text)) return 'recruit';
-    if (/代理店|パートナー|協業/.test(text)) return 'partner';
-    return 'other';
-  };
-
-  const localFallback = (text) => {
-    const category = detectCategory(text);
-    if (/電話|営業時間|受付時間|連絡先|メール/.test(text)) {
-      addBubble('電話受付は平日10:00〜18:00です。電話番号は 092-600-3558、メールは info@next-ji.jp です。');
-      addContactActions('other', `お問い合わせ：${text}`);
-      return;
-    }
-    if (/料金|費用|価格|いくら|見積/.test(text)) {
-      addBubble('料金は内容や規模によって異なるため、固定金額はご案内できません。担当者から正式なお見積りをご案内します。');
-      addContactActions(category, `料金・見積りについて相談したいです。\nご相談内容：${text}`);
-      return;
-    }
-    if (/期間|納期|何日|何週間|何ヶ月|いつ|開始/.test(text)) {
-      addBubble('制作・導入期間は内容によって異なります。希望時期がある場合はフォームに記載してください。');
-      addContactActions(category, `導入・制作期間について相談したいです。\nご相談内容：${text}\n希望時期：`);
-      return;
-    }
-    if (category === 'placement') {
-      addBubble('有料職業紹介では、製造・物流分野を中心に求人相談や採用支援を行っています。具体的な求人・勤務地・待遇は時期によって異なるため、担当者確認が必要です。');
-      addContactActions('placement', `有料職業紹介について相談したいです。\nご相談内容：${text}`);
-      return;
-    }
-    if (category !== 'other') {
-      addBubble(`${serviceNames[category]}に関するご相談として承れます。個別条件は担当者が確認します。`);
-      addContactActions(category, `チャットからのご相談：${text}`);
-      return;
-    }
-    addBubble('現在AI回答を取得できませんでした。お問い合わせフォームから内容をお送りいただければ、担当者が確認します。');
-    addContactActions('other', `チャットからのご相談：${text}`);
-  };
-
   const setBusy = (value) => {
     busy = value;
     input.disabled = value;
@@ -325,14 +217,15 @@
     input.placeholder = value ? 'AIが回答を作成中です…' : '質問を入力してください';
   };
 
-  const answerFreeText = async (raw) => {
-    const text = raw.trim();
-    if (!text || busy) return;
+  const askAI = async (rawMessage, displayText = rawMessage) => {
+    const message = String(rawMessage || '').trim();
+    const visible = String(displayText || message).trim();
+    if (!message || busy) return;
 
-    const previousHistory = aiHistory.slice(-8);
-    addBubble(text, true);
-    aiHistory.push({ role: 'user', content: text });
-    if (aiHistory.length > 10) aiHistory.splice(0, aiHistory.length - 10);
+    const previousHistory = aiHistory.slice(-16);
+    addBubble(visible, true);
+    aiHistory.push({ role: 'user', content: message });
+    if (aiHistory.length > 18) aiHistory.splice(0, aiHistory.length - 18);
 
     setBusy(true);
     const typing = addTyping();
@@ -342,33 +235,45 @@
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, history: previousHistory })
+        body: JSON.stringify({ message, history: previousHistory })
       });
 
       let data = null;
       try { data = await response.json(); } catch (_) { data = null; }
       typing.remove();
 
-      if (!response.ok || !data || !data.ok || !data.answer) {
-        localFallback(text);
+      if (!response.ok || !data || data.ok !== true || !data.answer) {
+        addBubble('現在AI回答を取得できませんでした。少し時間をおいてもう一度お試しいただくか、お問い合わせフォームをご利用ください。');
+        addContactActions('other', `チャットからのご相談：${visible}`);
         return;
       }
 
       addBubble(data.answer);
       aiHistory.push({ role: 'assistant', content: data.answer });
-      if (aiHistory.length > 10) aiHistory.splice(0, aiHistory.length - 10);
+      if (aiHistory.length > 18) aiHistory.splice(0, aiHistory.length - 18);
 
-      const category = Object.prototype.hasOwnProperty.call(categoryMap, data.category) ? data.category : detectCategory(text);
+      const category = Object.prototype.hasOwnProperty.call(categoryMap, data.category) ? data.category : 'other';
       if (data.suggest_contact) {
-        addContactActions(category, `チャットからのご相談：${text}\n\nAIによる事前案内：${data.answer}\n\n担当者へのご相談内容：`);
+        addContactActions(category, `チャットからのご相談：${visible}\n\nAIによる事前案内：${data.answer}\n\n担当者へのご相談内容：`);
       }
     } catch (_) {
       typing.remove();
-      localFallback(text);
+      addBubble('通信状況によりAI回答を取得できませんでした。少し時間をおいてもう一度お試しください。');
     } finally {
       setBusy(false);
       setTimeout(() => input.focus({ preventScroll: true }), 60);
     }
+  };
+
+  const showMainMenu = () => {
+    addChoices(serviceItems.map(([key, label, note]) => ({
+      label,
+      note,
+      onClick: (button) => {
+        button.closest('.nji-chatbot__choices')?.querySelectorAll('button').forEach((btn) => { btn.disabled = true; });
+        askAI(`${label}について案内してください。`, label);
+      }
+    })));
   };
 
   const openChat = () => {
@@ -388,15 +293,17 @@
 
   launcher.addEventListener('click', () => root.classList.contains('is-open') ? closeChat() : openChat());
   closeBtn.addEventListener('click', closeChat);
+
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && root.classList.contains('is-open')) closeChat();
   });
+
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     const value = input.value;
     if (!value.trim() || busy) return;
     input.value = '';
-    answerFreeText(value);
+    askAI(value);
   });
 
   addBubble('こんにちは。Next Japan InnovationのNJI・chatBOTくんです。\nメニューを選ぶか、下の入力欄から自由に質問してください。');
