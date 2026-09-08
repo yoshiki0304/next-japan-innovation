@@ -53,6 +53,7 @@
       let manualScrollLock = false;
       let pendingServiceIntent = '';
       let pendingServiceMenuTimer = 0;
+      let lastSubmittedText = '';
 
       const distanceFromBottom = () => Math.max(0, chatBody.scrollHeight - chatBody.clientHeight - chatBody.scrollTop);
       const isNearBottom = () => distanceFromBottom() <= 42;
@@ -124,6 +125,58 @@
         scrollToBottom();
       };
 
+      const removeImmediateContactActions = (row) => {
+        const next = row?.nextElementSibling;
+        if (next?.matches('.nji-chatbot__actions')) next.remove();
+      };
+
+      const rewriteLegacyFallback = (row, bubble) => {
+        if (!row || !bubble) return;
+        const current = (bubble.textContent || '').trim();
+        const submitted = (lastSubmittedText || '').trim();
+        if (!current || !submitted) return;
+
+        if (current.includes('電話受付は平日10:00〜18:00')) {
+          bubble.textContent = '営業時間は10:00〜19:00です。土日祝日はお休みです。電話番号は092-600-3558、メールはinfo@next-ji.jpです。';
+          removeImmediateContactActions(row);
+          return;
+        }
+
+        if (current.includes('固定金額はご案内できません')) {
+          removeImmediateContactActions(row);
+
+          if (/ホームページ|\bHP\b|\bWEB\b|サイト|\bLP\b/i.test(submitted)) {
+            bubble.textContent = 'ホームページ制作の月額料金ですね！通常のホームページ制作は月額9,800円〜200,000円です。AIチャットボットくん付きの場合は月額30,000円〜で、ページ数や必要な機能、運用内容によって変わります。';
+            return;
+          }
+
+          if (/AIチャットボット|chatBOT|チャットボット/i.test(submitted)) {
+            bubble.textContent = 'AIチャットボットくんの料金ですね！ホームページにAIチャットボットくんを付ける場合は月額30,000円〜です。必要な機能や連携内容によって料金が変わります。';
+            return;
+          }
+
+          const intent = /月額/.test(submitted) ? '月額料金' : '料金・見積り';
+          bubble.textContent = intent === '月額料金'
+            ? '月額料金ですね！どちらのサービスについてでしょうか？'
+            : '料金についてですね！どちらのサービスについてでしょうか？';
+          appendServiceIntentMenu(intent);
+          return;
+        }
+
+        if (current.includes('制作・導入期間は内容によって異なります')) {
+          removeImmediateContactActions(row);
+
+          if (/ホームページ|\bHP\b|\bWEB\b|サイト|\bLP\b/i.test(submitted)) {
+            bubble.textContent = 'ホームページ制作の期間ですね！通常はお申込みから平均20日前後です。お急ぎの場合は最短3日で対応できるケースもありますが、特急対応は追加料金が発生する場合があります。';
+            return;
+          }
+
+          bubble.textContent = '導入・制作期間についてですね。どちらのサービスについてでしょうか？';
+          appendServiceIntentMenu('導入・制作期間');
+          return;
+        }
+      };
+
       const handleAiMeta = (event) => {
         const detail = event?.detail || {};
         if (detail.action !== 'show_service_menu') return;
@@ -139,6 +192,12 @@
       };
 
       document.addEventListener('nji:chatbot-ai-meta', handleAiMeta);
+
+      const inputForm = root?.querySelector('.nji-chatbot__inputbar');
+      const inputField = root?.querySelector('.nji-chatbot__input');
+      inputForm?.addEventListener('submit', () => {
+        lastSubmittedText = String(inputField?.value || '').trim();
+      }, true);
 
       // If the user scrolls upward while a reply is being typed, stop automatic
       // bottom-following immediately. Resume only after they return to the bottom.
@@ -391,6 +450,7 @@
               if (row.classList.contains('is-user')) return;
               const bubble = row.querySelector('.nji-chatbot__bubble');
               if (!bubble || bubble.classList.contains('nji-chatbot__typing')) return;
+              rewriteLegacyFallback(row, bubble);
               typeQueue = typeQueue.then(() => typeBubble(bubble));
             });
           });
