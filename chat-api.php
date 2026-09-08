@@ -74,6 +74,31 @@ function enforce_rate_limit(): void {
     fclose($fp);
 }
 
+function get_nji_knowledge(): string {
+    $path = __DIR__ . DIRECTORY_SEPARATOR . 'assets' . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'nji-knowledge.json';
+
+    if (!is_file($path)) {
+        return '';
+    }
+
+    $raw = file_get_contents($path);
+
+    if (!is_string($raw) || trim($raw) === '') {
+        return '';
+    }
+
+    $decoded = json_decode($raw, true);
+
+    if (!is_array($decoded)) {
+        return '';
+    }
+
+    return json_encode(
+        $decoded,
+        JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT
+    ) ?: '';
+}
+
 function get_api_key(): string {
     $key = getenv('GEMINI_API_KEY');
     if (is_string($key) && trim($key) !== '') return trim($key);
@@ -256,6 +281,9 @@ if ($apiKey === '') {
         'message' => '現在AI回答を準備中です。メニューまたはお問い合わせフォームをご利用ください。'
     ]);
 }
+$knowledge = get_nji_knowledge();
+
+$knowledgeBlock = $knowledge !== '' ? "\n\n【NJI専用知識データ】\n" . $knowledge : '';
 
 $instructions = <<<'PROMPT'
 あなたは株式会社Next Japan Innovationの公式Webサイト内「お問い合わせサポートAI」です。
@@ -300,6 +328,8 @@ $instructions = <<<'PROMPT'
 category は web, sns, ai, reservation, camera, app, placement, recruit, partner, other のいずれか。
 suggest_contact は、見積り、料金、納期、具体的な求人、応募、採用、代理店条件、個別案件、担当者確認が必要な質問では true。それ以外の一般的な案内では false。
 PROMPT;
+
+$instructions .= $knowledgeBlock;
 
 $payload = [
     'systemInstruction' => [
