@@ -6,8 +6,6 @@
   const baseSrc = self.src;
   let resetting = false;
 
-  // Capture structured UI instructions returned by chat-api.php without changing
-  // the stable chatbot core. The core still owns normal conversation rendering.
   if (!window.__njiChatbotFetchMetaPatched && typeof window.fetch === 'function') {
     window.__njiChatbotFetchMetaPatched = true;
     const nativeFetch = window.fetch.bind(window);
@@ -37,9 +35,7 @@
     const firstBubble = chatBody?.querySelector('.nji-chatbot__bubble');
     const initialGreeting = 'こんにちは。NJI・chatBOTくんです！\nメニューを選ぶか、下の入力欄から自由に質問してください。';
 
-    if (firstBubble) {
-      firstBubble.textContent = initialGreeting;
-    }
+    if (firstBubble) firstBubble.textContent = initialGreeting;
 
     if (chatBody) {
       chatBody.style.overflowY = 'auto';
@@ -56,10 +52,16 @@
       let pendingServiceMenuTimer = 0;
       let lastSubmittedText = '';
 
-      const distanceFromBottom = () => Math.max(0, chatBody.scrollHeight - chatBody.clientHeight - chatBody.scrollTop);
+      const keepAtTop = () => { chatBody.scrollTop = 0; };
 
-      const keepAtTop = () => {
-        chatBody.scrollTop = 0;
+      const settleToBottom = () => {
+        if (manualScrollLock || !chatBody.isConnected) return;
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            if (manualScrollLock || !chatBody.isConnected) return;
+            chatBody.scrollTop = chatBody.scrollHeight;
+          });
+        });
       };
 
       const serviceIntentItems = [
@@ -84,15 +86,11 @@
         delete chatBody.dataset.manualScrollLock;
 
         const wrap = button?.closest('.nji-chatbot__choices');
-        if (wrap) {
-          wrap.querySelectorAll('button').forEach((btn) => { btn.disabled = true; });
-        }
+        if (wrap) wrap.querySelectorAll('button').forEach((btn) => { btn.disabled = true; });
 
         input.value = `${item.queryName}の${intent || '詳細'}について教えてください。`;
         form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
 
-        // The core stores the full contextual sentence in AI history, while the
-        // visible user bubble stays natural and simply shows the selected service.
         requestAnimationFrame(() => {
           const userRows = chatBody.querySelectorAll('.nji-chatbot__row.is-user');
           const lastRow = userRows[userRows.length - 1];
@@ -122,17 +120,11 @@
         chatBody.appendChild(wrap);
       };
 
-      // Do not add a large menu while the thinking/typewriter animation is still
-      // running. Inserting it early changes scrollHeight and caused large jumps and
-      // temporary blank screens. Wait until the current reply is fully rendered.
       const appendServiceIntentMenu = (intent) => {
         if (!intent) return;
         window.setTimeout(() => {
           const queueAtRequest = typeQueue;
-          queueAtRequest.then(() => {
-            if (manualScrollLock) return appendServiceIntentMenuNow(intent);
-            appendServiceIntentMenuNow(intent);
-          });
+          queueAtRequest.then(() => appendServiceIntentMenuNow(intent));
         }, 0);
       };
 
@@ -140,6 +132,9 @@
         const next = row?.nextElementSibling;
         if (next?.matches('.nji-chatbot__actions')) next.remove();
       };
+
+      const shorthandPriceIntent = (text) => /月額|月いくら|毎月|料金|費用|価格|値段|いくら|コスト|金額|見積|見積もり|見積り|お金|プラン料金/i.test(text);
+      const shorthandScheduleIntent = (text) => /納期|期間|何日|何週間|何か月|何ヶ月|どれくらい|どのくらい|いつできる|いつ完成|完成いつ|いつから|開始時期|制作日数|導入まで/i.test(text);
 
       const rewriteLegacyFallback = (row, bubble) => {
         if (!row || !bubble) return;
@@ -166,7 +161,7 @@
             return;
           }
 
-          const intent = /月額/.test(submitted) ? '月額料金' : '料金・見積り';
+          const intent = /月額|月いくら|毎月/.test(submitted) ? '月額料金' : '料金・見積り';
           bubble.textContent = intent === '月額料金'
             ? '月額料金ですね！どちらのサービスについてでしょうか？'
             : '料金についてですね！どちらのサービスについてでしょうか？';
@@ -176,15 +171,29 @@
 
         if (current.includes('制作・導入期間は内容によって異なります')) {
           removeImmediateContactActions(row);
-
           if (/ホームページ|\bHP\b|\bWEB\b|サイト|\bLP\b/i.test(submitted)) {
             bubble.textContent = 'ホームページ制作の期間ですね！通常はお申込みから平均20日前後です。お急ぎの場合は最短3日で対応できるケースもありますが、特急対応は追加料金が発生する場合があります。';
             return;
           }
-
           bubble.textContent = '導入・制作期間についてですね。どちらのサービスについてでしょうか？';
           appendServiceIntentMenu('導入・制作期間');
           return;
+        }
+
+        if (current.includes('現在AI回答を取得できませんでした')) {
+          removeImmediateContactActions(row);
+          if (shorthandPriceIntent(submitted)) {
+            const intent = /月額|月いくら|毎月/.test(submitted) ? '月額料金' : '料金・見積り';
+            bubble.textContent = intent === '月額料金'
+              ? '月額料金ですね！どちらのサービスについてでしょうか？'
+              : '料金についてですね！どちらのサービスについてでしょうか？';
+            appendServiceIntentMenu(intent);
+            return;
+          }
+          if (shorthandScheduleIntent(submitted)) {
+            bubble.textContent = '期間についてですね！どちらのサービスについてでしょうか？';
+            appendServiceIntentMenu('導入・制作期間');
+          }
         }
       };
 
@@ -212,18 +221,17 @@
         delete chatBody.dataset.manualScrollLock;
       }, true);
 
-      // Any deliberate wheel/trackpad interaction means the user owns the scroll
-      // position. Do not auto-follow again until they submit or choose a menu item.
       chatBody.addEventListener('wheel', (event) => {
-        if (event.ctrlKey) return;
-        if (event.deltaY === 0) return;
+        if (event.ctrlKey || event.deltaY === 0) return;
         manualScrollLock = true;
         chatBody.dataset.manualScrollLock = '1';
       }, { passive: true, capture: true });
 
-      // A menu/action click starts a new answer, so auto-follow may be enabled again.
-      // We intentionally do not force-scroll here; the core will position the new
-      // user bubble once, avoiding a second competing scroll operation.
+      chatBody.addEventListener('touchmove', () => {
+        manualScrollLock = true;
+        chatBody.dataset.manualScrollLock = '1';
+      }, { passive: true, capture: true });
+
       chatBody.addEventListener('click', (event) => {
         const interactive = event.target.closest('.nji-chatbot__choice,.nji-chatbot__action');
         if (!interactive || !chatBody.contains(interactive)) return;
@@ -257,6 +265,7 @@
             item.style.pointerEvents = '';
           });
           if (options.keepTop === true) keepAtTop();
+          else settleToBottom();
           return;
         }
 
@@ -266,7 +275,11 @@
             item.style.opacity = '1';
             item.style.transform = 'translateY(0)';
             item.style.pointerEvents = '';
-            if (options.keepTop === true) keepAtTop();
+            if (options.keepTop === true) {
+              keepAtTop();
+            } else if (index === items.length - 1) {
+              settleToBottom();
+            }
           }, index * 135);
         });
       };
@@ -289,6 +302,7 @@
         if (!fullText || reduceTyping.matches) {
           bubble.textContent = fullText;
           if (options.initial === true) keepAtTop();
+          else settleToBottom();
           resolve();
           return;
         }
@@ -309,6 +323,7 @@
           if (index >= chars.length) {
             bubble.removeAttribute('aria-label');
             if (options.initial === true) keepAtTop();
+            else settleToBottom();
             resolve();
             return;
           }
@@ -375,9 +390,7 @@
         queueAtCreation.then(() => {
           if (!actions.isConnected) return;
           actions.style.display = '';
-          requestAnimationFrame(() => {
-            revealStaggerItems(actions, '.nji-chatbot__action');
-          });
+          requestAnimationFrame(() => revealStaggerItems(actions, '.nji-chatbot__action'));
         });
       };
 
@@ -401,15 +414,9 @@
         initialSequenceStarted = true;
         keepAtTop();
 
-        typeQueue = typeQueue.then(() => typeBubble(firstBubble, {
-          initial: true,
-          fullText: initialGreeting
-        }));
-
+        typeQueue = typeQueue.then(() => typeBubble(firstBubble, { initial: true, fullText: initialGreeting }));
         typeQueue.then(() => {
-          if (initialChoices?.isConnected) {
-            revealStaggerItems(initialChoices, '.nji-chatbot__choice', { keepTop: true });
-          }
+          if (initialChoices?.isConnected) revealStaggerItems(initialChoices, '.nji-chatbot__choice', { keepTop: true });
         });
       };
 
@@ -467,11 +474,7 @@
 
       observer.observe(chatBody, { childList: true, subtree: true });
 
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          chatBody.scrollTop = 0;
-        });
-      });
+      requestAnimationFrame(() => requestAnimationFrame(() => { chatBody.scrollTop = 0; }));
     }
 
     if (!document.querySelector('script[data-nji-chatbot-mascot]')) {
@@ -487,7 +490,7 @@
     if (document.querySelector('script[data-nji-chatbot-core]') || document.querySelector('[data-nji-chatbot]')) return;
 
     const core = document.createElement('script');
-    core.src = new URL('chatbot-core.js?v=10-stable-scroll', baseSrc).href;
+    core.src = new URL('chatbot-core.js?v=11-final-scroll-intent', baseSrc).href;
     core.async = false;
     core.setAttribute('data-nji-chatbot-core', '');
     core.addEventListener('load', setupAfterCoreLoad, { once: true });
