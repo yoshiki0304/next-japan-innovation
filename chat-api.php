@@ -116,14 +116,14 @@ function redact_sensitive_input(string $value): string {
 }
 
 function call_gemini(string $apiKey, array $payload): array {
-    $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent';
+    $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent';
     $json = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     if ($json === false) return ['status' => 0, 'body' => '', 'error' => 'encode_failed'];
 
     $headers = [
         'Content-Type: application/json',
         'x-goog-api-key: ' . $apiKey,
-        'x-goog-api-client: next-japan-innovation-chatbot/2.0'
+        'x-goog-api-client: next-japan-innovation-chatbot/2.1'
     ];
 
     if (function_exists('curl_init')) {
