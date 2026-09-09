@@ -170,6 +170,30 @@ function extract_gemini_text(array $response): string {
     return trim(implode("\n", $texts));
 }
 
+function safe_gemini_diagnostic(int $status, string $body, string $transportError = ''): array {
+    $googleStatus = '';
+    if ($body !== '') {
+        $decoded = json_decode($body, true);
+        if (is_array($decoded)) {
+            $candidate = $decoded['error']['status'] ?? '';
+            if (is_string($candidate) && preg_match('/^[A-Z0-9_]{2,80}$/', $candidate)) {
+                $googleStatus = $candidate;
+            }
+        }
+    }
+
+    $transport = '';
+    if ($status === 0 && $transportError !== '') {
+        $transport = 'TRANSPORT_ERROR';
+    }
+
+    return [
+        'upstream_http' => $status,
+        'upstream_status' => $googleStatus,
+        'transport' => $transport,
+    ];
+}
+
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     respond_json(405, ['ok' => false, 'code' => 'METHOD_NOT_ALLOWED']);
 }
@@ -306,7 +330,8 @@ if ($status < 200 || $status >= 300 || $body === '') {
     respond_json($clientStatus, [
         'ok' => false,
         'code' => $status === 429 ? 'AI_RATE_LIMIT' : 'AI_UNAVAILABLE',
-        'message' => 'AI回答を取得できませんでした。少し時間をおいて再度お試しください。'
+        'message' => 'AI回答を取得できませんでした。少し時間をおいて再度お試しください。',
+        'diagnostic' => safe_gemini_diagnostic($status, $body, (string)($result['error'] ?? '')),
     ]);
 }
 
